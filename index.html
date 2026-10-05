@@ -169,7 +169,7 @@
   .kpi-delta.flat{color:var(--muted)}
   .kpi-sub{font-size:10.5px;color:var(--muted);margin-top:2px;line-height:1.35}
 
-  /* Destaque (roxo) — não sobrescreve a cor do farol, apenas adiciona contorno */
+  /* Destaque roxo com pin — não sobrescreve a cor do farol */
   .kpi.highlight{
     border:2.5px solid var(--purple);
     box-shadow:0 0 0 3px var(--purple-ring), 0 8px 22px -12px rgba(124,58,237,.55);
@@ -205,13 +205,19 @@
   .copy-btn.failed{background:var(--red-bg-soft);border-color:var(--red);color:var(--red-ink)}
   .chart-wrap{position:relative;height:340px}
 
-  /* ---------- Blocos com botão copiar ---------- */
-  .block-with-copy{position:relative}
-  .block-with-copy .block-head{
-    display:flex;justify-content:space-between;align-items:center;
-    gap:12px;flex-wrap:wrap;margin-bottom:12px;
+  /* ---------- Cabeçalho temporário injetado na captura ---------- */
+  .capture-header{
+    margin-bottom:14px;
+    padding-bottom:10px;
+    border-bottom:2px solid var(--border);
   }
-  .block-with-copy .block-head h2{margin:0}
+  .capture-header .capture-title{
+    font-size:16px; font-weight:800; color:#1e293b; margin-bottom:4px;
+    letter-spacing:-.01em;
+  }
+  .capture-header .capture-subtitle{
+    font-size:12.5px; color:var(--muted);
+  }
 
   /* ---------- TABELAS ---------- */
   .tables-stack{display:flex;flex-direction:column;gap:18px}
@@ -320,9 +326,7 @@
   }
   .modal-head h3{ margin:0 0 4px; font-size:16px; display:flex; align-items:center; gap:8px; }
   .modal-head p{ margin:0; font-size:12.5px; color:var(--muted); line-height:1.5; }
-  .modal-body{
-    padding:16px 22px; overflow:auto; flex:1;
-  }
+  .modal-body{ padding:16px 22px; overflow:auto; flex:1; }
   .modal-module{ margin-bottom:22px; }
   .modal-module:last-child{ margin-bottom:0; }
   .modal-module h4{
@@ -521,6 +525,45 @@ function fmtPct(n){
 }
 function normalizeLabel(label){
   return String(label || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+
+/* -------- Helpers de captura -------- */
+function buildModuleSubtitle(m){
+  const modo = m.selectionMode === 'single' ? '🎯 Foco único' : '📊 Multi';
+  const ents = m.selectionMode === 'single' ? [m.focusEntity] : [...m.selectedEntities];
+  const labels = ents.map(e => entityLabelOf(m, e));
+  const entStr = labels.length <= 3 ? labels.join(' · ') : `${labels.slice(0,3).join(' · ')} +${labels.length-3}`;
+  return `${m.cfg.icon} ${m.cfg.title} · ${modo} · ${entStr}`;
+}
+
+function buildCaptureHeader(title, subtitle){
+  return `<div class="capture-header">
+    <div class="capture-title">${esc(title)}</div>
+    ${subtitle ? `<div class="capture-subtitle">${esc(subtitle)}</div>` : ''}
+  </div>`;
+}
+
+function copyButtonHTML(targetId, title, opts = {}){
+  const moduleAttr  = opts.module ? `data-copy-module="${esc(opts.module)}"` : '';
+  const subtitleAttr = opts.subtitle ? `data-copy-subtitle="${esc(opts.subtitle)}"` : '';
+  return `<button class="copy-btn" type="button"
+    data-copy-block="${targetId}"
+    data-copy-title="${esc(title)}"
+    ${moduleAttr} ${subtitleAttr}
+    data-html2canvas-ignore="true">📋 Copiar imagem</button>`;
+}
+
+function getCopyHeaderForButton(btn){
+  const title = btn.dataset.copyTitle || '';
+  let subtitle = '';
+  if (btn.dataset.copySubtitle){
+    subtitle = btn.dataset.copySubtitle;
+  } else if (btn.dataset.copyModule){
+    const m = MODULES[btn.dataset.copyModule];
+    if (m) subtitle = buildModuleSubtitle(m);
+  }
+  if (!title) return '';
+  return buildCaptureHeader(title, subtitle);
 }
 
 /* =========================================================
@@ -763,7 +806,7 @@ const MODULE_CFG = {
 };
 
 /* =========================================================
-   ESTADO POR MÓDULO
+   ESTADO
    ========================================================= */
 const MODULES = {};
 for (const key of Object.keys(MODULE_CFG)){
@@ -833,7 +876,7 @@ function buildModulePanel(m){
         <h2>📊 Médias do período — <span class="muted" id="kpiEntityLabel-${m.key}"></span></h2>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-edit" data-edit-modal="${m.key}">⚙️ Editar índices</button>
-          <button class="copy-btn" type="button" data-copy-block="kpiCapture-${m.key}" data-html2canvas-ignore="true">📋 Copiar imagem</button>
+          ${copyButtonHTML(`kpiCapture-${m.key}`, '📊 Médias do período', { module: m.key })}
         </div>
       </div>
       <div id="kpiCapture-${m.key}">
@@ -844,7 +887,7 @@ function buildModulePanel(m){
     <section class="card hidden" id="avanco-${m.key}">
       <div class="card-head-row">
         <h2>📈 Avanço da primeira à última semana — <span class="muted" id="avancoEntityLabel-${m.key}"></span></h2>
-        <button class="copy-btn" type="button" data-copy-block="avancoCapture-${m.key}" data-html2canvas-ignore="true">📋 Copiar imagem</button>
+        ${copyButtonHTML(`avancoCapture-${m.key}`, '📈 Avanço da primeira à última semana', { module: m.key })}
       </div>
       <div id="avancoCapture-${m.key}">
         <div class="kpis" id="avancoList-${m.key}"></div>
@@ -862,7 +905,7 @@ function buildModulePanel(m){
         <div class="table-block" data-block="indexes-${m.key}">
           <div class="table-block-head">
             <h3>Tabela 1 — Evolução das métricas (entidade em foco)</h3>
-            <button class="copy-btn" type="button" data-copy-block="tableBlockIndexes-${m.key}" data-html2canvas-ignore="true">📋 Copiar imagem</button>
+            ${copyButtonHTML(`tableBlockIndexes-${m.key}`, '📋 Tabela 1 — Evolução das métricas', { module: m.key })}
           </div>
           <div id="tableBlockIndexes-${m.key}">
             <div class="table-scroll"><table class="data-table" id="tableIndexes-${m.key}"></table></div>
@@ -874,7 +917,7 @@ function buildModulePanel(m){
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <span class="small muted">Métrica:</span>
               <select id="tableMetric-${m.key}" style="width:auto;min-width:220px;padding:5px 8px;font-size:12px"></select>
-              <button class="copy-btn" type="button" data-copy-block="tableBlockSchools-${m.key}" data-html2canvas-ignore="true">📋 Copiar imagem</button>
+              ${copyButtonHTML(`tableBlockSchools-${m.key}`, '📋 Tabela 2 — Evolução por escola', { module: m.key })}
             </div>
           </div>
           <div id="tableBlockSchools-${m.key}">
@@ -988,7 +1031,7 @@ async function loadAll(){
 document.getElementById('reloadBtn').addEventListener('click', () => loadAll());
 
 /* =========================================================
-   FINALIZAÇÃO / CONSOLIDAÇÃO
+   FINALIZAÇÃO
    ========================================================= */
 function finalizeModule(m){
   if (!m.manualOrder && m.datasets.length > 1){
@@ -1439,11 +1482,13 @@ function renderCharts(m){
   sortedMetrics.forEach((metric, mi) => {
     const card = document.createElement('div');
     const hl = isHighlighted(m.key, metric.key);
+    const cardId = `chartCard-${m.key}-${mi}`;
+    card.id = cardId;
     card.className = 'chart-card' + (hl ? ' highlight-chart' : '');
     card.innerHTML = `
       <div class="chart-head">
         <h3 title="${esc(metric.label)}">${esc(metric.label)}</h3>
-        <button class="copy-btn" type="button" data-html2canvas-ignore="true">📋 Copiar imagem</button>
+        ${copyButtonHTML(cardId, `📊 ${metric.label}`, { module: m.key })}
       </div>
       <div class="chart-wrap"><canvas></canvas></div>`;
     grid.appendChild(card);
@@ -1512,8 +1557,6 @@ function renderCharts(m){
         }
       }
     });
-    const btn = card.querySelector('.copy-btn');
-    btn.addEventListener('click', () => copyBlockAsImage(card, btn));
     m.charts.push(chart);
   });
 }
@@ -1634,9 +1677,9 @@ function renderTables(m){
 }
 
 /* =========================================================
-   COPIAR IMAGEM (genérico — blocos, gráficos, tabelas)
+   COPIAR IMAGEM — com cabeçalho injetado
    ========================================================= */
-async function copyBlockAsImage(block, btn){
+async function copyBlockAsImage(block, btn, headerHTML){
   if (!window.html2canvas){
     btn.textContent = '❌ html2canvas';
     setTimeout(() => btn.textContent = '📋 Copiar imagem', 1500);
@@ -1644,7 +1687,7 @@ async function copyBlockAsImage(block, btn){
   }
   const original = btn.textContent;
 
-  // Desbloqueia tabelas com scroll
+  // Desbloqueia scroll
   const scroll = block.querySelector('.table-scroll');
   const prevMaxH = scroll ? scroll.style.maxHeight : '';
   const prevOver = scroll ? scroll.style.overflow : '';
@@ -1652,8 +1695,16 @@ async function copyBlockAsImage(block, btn){
   if (scroll){ scroll.style.maxHeight = 'none'; scroll.style.overflow = 'visible'; scroll.style.height = 'auto'; }
   block.classList.add('capturing');
 
+  // Injeta o cabeçalho temporário
+  let headerEl = null;
+  if (headerHTML){
+    headerEl = document.createElement('div');
+    headerEl.setAttribute('data-copy-temp', '1');
+    headerEl.innerHTML = headerHTML;
+    block.insertBefore(headerEl, block.firstChild);
+  }
+
   const prevBg = block.style.background, prevPad = block.style.padding, prevRad = block.style.borderRadius;
-  const prevMinW = block.style.minWidth;
   block.style.background = '#ffffff';
   block.style.padding = '14px';
   block.style.borderRadius = '12px';
@@ -1675,17 +1726,18 @@ async function copyBlockAsImage(block, btn){
     if (scroll){ scroll.style.maxHeight = prevMaxH; scroll.style.overflow = prevOver; scroll.style.height = prevH; }
     block.classList.remove('capturing');
     block.style.background = prevBg; block.style.padding = prevPad; block.style.borderRadius = prevRad;
-    block.style.minWidth = prevMinW;
+    if (headerEl) headerEl.remove();
   }
 }
 
-// Delegação global para todos os botões com data-copy-block
+/* Delegação global para todos os botões de copiar */
 document.addEventListener('click', e => {
   const btn = e.target.closest('[data-copy-block]');
   if (!btn) return;
   const block = document.getElementById(btn.dataset.copyBlock);
   if (!block) return;
-  copyBlockAsImage(block, btn);
+  const headerHTML = getCopyHeaderForButton(btn);
+  copyBlockAsImage(block, btn, headerHTML);
 });
 
 /* =========================================================
@@ -1807,7 +1859,7 @@ document.addEventListener('keydown', e => {
 });
 
 /* =========================================================
-   RESUMO DA ESCOLA — apenas as médias (cards)
+   RESUMO DA ESCOLA
    ========================================================= */
 function renderResumo(){
   const panel = document.getElementById('panel-resumo');
@@ -1826,6 +1878,11 @@ function renderResumo(){
   for (const m of Object.values(MODULES)) m.entities.forEach(n => allSchools.add(n));
   const current = panel.dataset.school || '__MEDIA__';
 
+  // Rótulo da escola atual
+  let currentLabel = 'Média geral';
+  if (current === '__CONSOLIDADO__') currentLabel = 'Σ Consolidado (soma)';
+  else if (current !== '__MEDIA__') currentLabel = current;
+
   let html = `
     <div class="resumo-head">
       <span class="label">Escola em foco</span>
@@ -1838,19 +1895,17 @@ function renderResumo(){
       <span class="muted small" style="flex:1">Médias dos índices selecionados para esta escola.</span>
       <button class="btn btn-edit" data-edit-modal="resumo">⚙️ Editar índices</button>
     </div>
+
+    <div class="card">
+      <h2>📊 Médias dos índices — <span class="muted">${esc(currentLabel)}</span></h2>
+      <div id="resumoAverages"></div>
+    </div>
   `;
 
-  // Bloco de médias
-  html += `<div class="card">
-    <h2>📊 Médias dos índices — <span class="muted" id="resumoEntityLabel">${esc(entityLabelOf({onlyCommon:false}, current))}</span></h2>
-    <div id="resumoAverages"></div>
-  </div>`;
-
-  // Tabelas detalhadas por módulo
   for (const key of ['superbi','conviva','atpl']){
     const m = MODULES[key];
     if (!m.datasets.length) continue;
-    html += buildResumoTable(m, current);
+    html += buildResumoTable(m, current, currentLabel);
   }
 
   panel.innerHTML = html;
@@ -1860,10 +1915,10 @@ function renderResumo(){
     renderResumo();
   });
 
-  renderResumoAverages(current);
+  renderResumoAverages(current, currentLabel);
 }
 
-function renderResumoAverages(entity){
+function renderResumoAverages(entity, entityLabel){
   const container = document.getElementById('resumoAverages');
   if (!container) return;
 
@@ -1886,11 +1941,13 @@ function renderResumoAverages(entity){
       return ha - hb;
     });
 
+    const captureId = `resumoKpi-${key}`;
+    const subtitle = `${m.cfg.icon} ${m.cfg.title} · Escola: ${entityLabel}`;
+
     html += `<div class="resumo-subtitle">${m.cfg.icon} ${esc(m.cfg.title)}
-      <button class="copy-btn" type="button" data-copy-block="resumoKpi-${key}" data-html2canvas-ignore="true"
-              style="margin-left:auto">📋 Copiar imagem</button>
+      ${copyButtonHTML(captureId, `📊 Médias — ${m.cfg.title}`, { subtitle })}
     </div>`;
-    html += `<div id="resumoKpi-${key}" style="margin-bottom:18px"><div class="kpis">`;
+    html += `<div id="${captureId}" style="margin-bottom:18px"><div class="kpis">`;
 
     for (const mt of sorted){
       const values = m.datasets.map(d => getValue(m, d, entity, mt.key));
@@ -1925,7 +1982,7 @@ function renderResumoAverages(entity){
 /* =========================================================
    TABELAS DO RESUMO
    ========================================================= */
-function buildResumoTable(m, entity){
+function buildResumoTable(m, entity, entityLabel){
   const cfg = m.cfg;
   const labels = m.datasets.map(d => d.label);
   const metrics = m.metrics;
@@ -1972,11 +2029,13 @@ function buildResumoTable(m, entity){
   });
 
   const blockId = `resumo-table-block-${m.key}`;
+  const subtitle = `${cfg.icon} ${cfg.title} · Escola: ${entityLabel}`;
+
   return `
     <div class="table-block" data-block="resumo-${m.key}" style="margin-bottom:18px">
       <div class="table-block-head">
         <h3>${cfg.icon} ${esc(cfg.title)} — ${esc(cfg.label)}</h3>
-        <button class="copy-btn" type="button" data-copy-block="${blockId}" data-html2canvas-ignore="true">📋 Copiar imagem</button>
+        ${copyButtonHTML(blockId, `${cfg.icon} ${cfg.title} — ${cfg.label}`, { subtitle })}
       </div>
       <div id="${blockId}">
         <div class="table-scroll">
