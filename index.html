@@ -44,6 +44,32 @@
   .global-bar button.primary:hover{ background:#0f766e; }
   .global-bar .load-info{ font-size:12px; color:#94a3b8; }
 
+  /* ---------- CARD DE AJUDA (files.json) ---------- */
+  .help-card{
+    display:none;
+    background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);
+    border:1px solid #f59e0b; border-radius:12px; padding:14px 16px;
+    margin-bottom:14px; color:#78350f;
+  }
+  .help-card.show{ display:block; }
+  .help-card h3{ margin:0 0 6px; font-size:14px; display:flex; align-items:center; gap:8px; }
+  .help-card p{ margin:6px 0; font-size:12.5px; line-height:1.5; }
+  .help-card code{ background:rgba(255,255,255,.6); border-radius:4px; padding:1px 6px; font-size:12px; }
+  .help-card .actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .help-card .actions button{
+    background:#78350f; color:#fff; border:none; border-radius:8px;
+    padding:8px 14px; font-size:12.5px; font-weight:600; cursor:pointer;
+    font-family:inherit; transition:.15s;
+  }
+  .help-card .actions button:hover{ background:#92400e; }
+  .help-card .actions button.secondary{ background:#fff; color:#78350f; border:1px solid #f59e0b; }
+  .help-card .actions button.secondary:hover{ background:#fffbeb; }
+  .help-card pre{
+    background:#fff; border:1px solid #fbbf24; border-radius:8px;
+    padding:10px 12px; font-size:11.5px; max-height:180px; overflow:auto;
+    margin-top:8px; color:#1e293b; font-family:ui-monospace,Menlo,Consolas,monospace;
+  }
+
   .tabs{
     display:flex; gap:6px; flex-wrap:wrap;
     background:#fff; border:1px solid var(--border); border-radius:12px;
@@ -249,16 +275,14 @@
   #loading{position:fixed;inset:0;background:rgba(238,242,247,.8);display:grid;place-items:center;
         z-index:99;backdrop-filter:blur(2px)}
   #loading .box{background:#fff;border-radius:14px;padding:22px 28px;text-align:center;
-        box-shadow:0 10px 40px -10px rgba(15,23,42,.3)}
+        box-shadow:0 10px 40px -10px rgba(15,23,42,.3); max-width:380px}
   #loading .box .t{font-weight:700;font-size:14px;margin-bottom:6px}
-  #loading .box .s{font-size:12px;color:var(--muted)}
+  #loading .box .s{font-size:12px;color:var(--muted); word-break:break-word}
   .spinner{width:32px;height:32px;border:3px solid #cfdcee;border-top-color:var(--accent);
         border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
   @keyframes spin{to{transform:rotate(360deg)}}
 
-  @media(max-width:1100px){
-    .charts-grid{grid-template-columns:1fr}
-  }
+  @media(max-width:1100px){ .charts-grid{grid-template-columns:1fr} }
   @media(max-width:860px){
     .controls-grid{grid-template-columns:1fr}
     .period-file{display:none}
@@ -273,20 +297,40 @@
 
   <header class="hero">
     <h1>📊 Painel Consolidado — Super BI · Conviva · Planejamento de Aula</h1>
-    <p>Painel único com quatro abas. Ao abrir, busca automaticamente os arquivos
-       <code>.xlsx/.xls/.csv</code> no diretório (via <code>files.json</code> ou listagem
-       do servidor), classifica pelo cabeçalho e distribui para a aba correta.
-       O <strong>Resumo da Escola</strong> consolida tudo em tabelas.</p>
+    <p>Painel único com quatro abas. Ao abrir, busca <strong>automaticamente</strong> os arquivos
+       <code>.xlsx/.xls/.csv</code> do mesmo diretório do <code>index.html</code>, classifica pelo
+       cabeçalho e distribui para a aba correta. O <strong>Resumo da Escola</strong> consolida
+       tudo em tabelas.</p>
   </header>
 
   <div class="global-bar">
     <span class="title">📁 Arquivos</span>
-    <button id="reloadBtn" class="primary">🔄 Recarregar do servidor</button>
+    <button id="reloadBtn" class="primary">🔄 Recarregar</button>
     <button id="loadFiles">📄 Selecionar arquivos…</button>
     <button id="loadDir">📂 Selecionar pasta local</button>
     <input type="file" id="multiFileInput" multiple accept=".xlsx,.xls,.csv" hidden>
     <input type="file" id="dirInput" webkitdirectory directory multiple hidden>
     <span class="load-info" id="loadInfo">Inicializando…</span>
+  </div>
+
+  <!-- Card de ajuda: só aparece se a automação falhar -->
+  <div class="help-card" id="helpCard">
+    <h3>⚙️ Como habilitar o carregamento 100% automático</h3>
+    <p>Não foi possível listar os arquivos do servidor automaticamente. Gere um arquivo
+       <code>files.json</code> na sua máquina e suba para a mesma pasta do
+       <code>index.html</code>. Depois disso, o painel carregará tudo sozinho.</p>
+    <div class="actions">
+      <button id="genFilesJsonBtn">📂 Gerar files.json a partir de uma pasta</button>
+      <button id="copySampleBtn" class="secondary">📋 Ver exemplo de files.json</button>
+      <input type="file" id="genDirInput" webkitdirectory directory multiple hidden>
+    </div>
+    <pre id="sampleJson" style="display:none">[
+  "AVARE (12).xlsx",
+  "AVARE (13).xlsx",
+  "atpl (1).xlsx",
+  "atpl (2).xlsx",
+  "superbi (1).xlsx"
+]</pre>
   </div>
 
   <nav class="tabs" id="tabsNav">
@@ -479,8 +523,7 @@ const MODULE_CFG = {
         header.forEach((h, idx) => { if (isMetric[idx]) v[h] = toNum(row[idx]); }); return v; };
       const rows = dataRows.map(row => ({ nome:String(row[nameIdx]).trim(), values:buildValues(row) }));
       const totalRow = totalRowRaw ? { nome:'Total', values:buildValues(totalRowRaw) } : null;
-      let period = extractPeriodFromFilters(ws);
-      let periodSource = 'filtro';
+      let period = extractPeriodFromFilters(ws); let periodSource = 'filtro';
       if (!period){ period = detectPeriodFromName(fileName); periodSource = 'arquivo'; }
       return { id:'ds_'+Math.random().toString(36).slice(2,9), fileName, week:period.week, periodSource,
                label:period.label, short:period.short, sortKey:period.sortKey,
@@ -880,15 +923,6 @@ function hideLoading(){ loadingEl.classList.add('hidden'); }
 /* =========================================================
    PROCESSAMENTO
    ========================================================= */
-async function processBuffer(buf, fileName){
-  const wb = XLSX.read(new Uint8Array(buf), {type:'array'});
-  const target = classifyWorkbook(wb);
-  if (!target) return null;
-  const cfg = MODULE_CFG[target];
-  const ds = cfg.parseWorkbook(wb, fileName);
-  return ds ? { target, ds } : null;
-}
-
 function classifyWorkbook(wb){
   const sheetName = wb.SheetNames.includes('Export') ? 'Export' : wb.SheetNames[0];
   const ws = wb.Sheets[sheetName]; if (!ws) return null;
@@ -912,62 +946,111 @@ async function addToModule(target, ds){
   return true;
 }
 
+async function loadFromArrayBuffer(buf, fileName){
+  const wb = XLSX.read(new Uint8Array(buf), {type:'array'});
+  const target = classifyWorkbook(wb);
+  if (!target) return null;
+  const ds = MODULE_CFG[target].parseWorkbook(wb, fileName);
+  return ds ? { target, ds } : null;
+}
+
 /* =========================================================
-   AUTO-LOAD DO SERVIDOR
-   Estratégia 1: files.json (manifesto)
-   Estratégia 2: listagem de diretório (parse HTML)
+   AUTOLOAD — 3 ESTRATÉGIAS EM CASCATA
    ========================================================= */
+
+/** 1. Manifesto JSON (files.json / manifest.json / arquivos.json / index.json) */
 async function fetchManifest(){
-  const candidates = ['files.json', 'manifest.json', 'arquivos.json'];
+  const candidates = ['files.json', 'manifest.json', 'arquivos.json', 'index.json', 'dados.json'];
   for (const name of candidates){
     try {
       const r = await fetch(name, {cache:'no-store'});
       if (!r.ok) continue;
-      const data = await r.json();
-      const list = Array.isArray(data) ? data : (data.files || []);
+      const text = await r.text();
+      // Ignora se veio HTML (servidor devolveu 404 custom)
+      if (/^\s*</.test(text)) continue;
+      const data = JSON.parse(text);
+      const list = Array.isArray(data) ? data : (data.files || data.arquivos || []);
       const files = list.filter(f => typeof f === 'string' && /\.(xlsx|xls|csv)$/i.test(f));
-      if (files.length) return files;
-    } catch(e){ /* ignora */ }
+      if (files.length) return { files, from:'files.json' };
+    } catch(e){ /* tenta o próximo */ }
   }
-  return [];
+  return null;
 }
 
+/** 2. Listagem de diretório (Apache/nginx/Python http.server) */
 async function fetchDirectoryListing(){
-  try {
-    const r = await fetch('./', {cache:'no-store'});
-    if (!r.ok) return [];
-    const html = await r.text();
-    const out = [];
-    const re = /href=["']([^"']+\.(?:xlsx|xls|csv))["']/gi;
-    let m;
-    while ((m = re.exec(html))) {
-      let url = m[1];
-      if (url.startsWith('http')) continue;       // ignora links externos
-      if (url.startsWith('/')) url = url.slice(1);
-      out.push(url);
-    }
-    return [...new Set(out)];
-  } catch(e){ return []; }
+  const tryPaths = ['./', './index/', location.pathname.replace(/[^/]*$/, '')];
+  const re = /href=["']([^"'?#]+?\.(?:xlsx|xls|csv))["']/gi;
+  const found = new Set();
+
+  for (const path of tryPaths){
+    try {
+      const r = await fetch(path, {cache:'no-store'});
+      if (!r.ok) continue;
+      const html = await r.text();
+      // Confirma que é listagem de diretório (tem links, não é HTML do index)
+      if (!/Index of|Parent Directory|Directory listing|<pre>/i.test(html) &&
+          !/<a href=/i.test(html)) continue;
+
+      let m;
+      while ((m = re.exec(html))){
+        let url = decodeURIComponent(m[1]);
+        // Ignora URLs absolutas externas
+        if (/^https?:\/\//i.test(url)) continue;
+        // Remove prefixos "../" ou "./"
+        url = url.replace(/^(\.\.?\/)+/, '');
+        // Remove caminhos absolutos de raiz (mantém só o nome relativo)
+        if (url.startsWith('/')) url = url.slice(1);
+        found.add(url);
+      }
+    } catch(e){ /* tenta o próximo */ }
+  }
+  if (found.size) return { files: [...found], from:'listagem do servidor' };
+  return null;
+}
+
+/** 3. Endpoints dinâmicos comuns (PHP) — alguns servidores geram listagens via PHP */
+async function fetchPhpEndpoint(){
+  const candidates = ['list.php', 'files.php', 'arquivos.php', 'ls.php', 'api.php'];
+  for (const name of candidates){
+    try {
+      const r = await fetch(name, {cache:'no-store'});
+      if (!r.ok) continue;
+      const text = await r.text();
+      if (/^\s*</.test(text) && !/\.(xlsx|xls|csv)/i.test(text)) continue;
+      let list;
+      try { list = JSON.parse(text); } catch(e){ list = text.split(/\r?\n/); }
+      const files = (Array.isArray(list) ? list : (list.files || []))
+        .filter(f => typeof f === 'string' && /\.(xlsx|xls|csv)$/i.test(f));
+      if (files.length) return { files, from:name };
+    } catch(e){}
+  }
+  return null;
 }
 
 async function autoLoadFromServer(silent){
-  if (!silent) showLoading('Procurando arquivos no servidor…');
-  setLoadInfo('🔄 Procurando arquivos…');
-
-  let files = await fetchManifest();
-  let origem = 'files.json';
-
-  if (!files.length){
-    files = await fetchDirectoryListing();
-    origem = 'listagem do servidor';
-  }
-
-  if (!files.length){
-    if (!silent) hideLoading();
-    setLoadInfo('ℹ️ Nenhum arquivo encontrado automaticamente. Use os botões para carregar.');
+  if (location.protocol === 'file:'){
+    setLoadInfo('⚠️ Aberto localmente (file://). Use "📂 Selecionar pasta local" para carregar.');
+    showHelpCard();
     return;
   }
 
+  if (!silent) showLoading('Procurando arquivos…');
+  setLoadInfo('🔄 Procurando arquivos…');
+  hideHelpCard();
+
+  let result = await fetchManifest();
+  if (!result) result = await fetchDirectoryListing();
+  if (!result) result = await fetchPhpEndpoint();
+
+  if (!result){
+    hideLoading();
+    setLoadInfo('⚠️ Automação indisponível neste servidor. Veja as instruções abaixo.');
+    showHelpCard();
+    return;
+  }
+
+  const { files, from } = result;
   const counters = { superbi:0, conviva:0, atpl:0, ignorados:0, duplicados:0 };
 
   for (let i = 0; i < files.length; i++){
@@ -978,13 +1061,10 @@ async function autoLoadFromServer(silent){
       const res = await fetch(url, {cache:'no-store'});
       if (!res.ok){ counters.ignorados++; continue; }
       const buf = await res.arrayBuffer();
-      const wb = XLSX.read(new Uint8Array(buf), {type:'array'});
-      const target = classifyWorkbook(wb);
-      if (!target){ counters.ignorados++; continue; }
-      const ds = MODULE_CFG[target].parseWorkbook(wb, name);
-      if (!ds){ counters.ignorados++; continue; }
-      const added = await addToModule(target, ds);
-      if (added) counters[target]++;
+      const parsed = await loadFromArrayBuffer(buf, name);
+      if (!parsed){ counters.ignorados++; continue; }
+      const added = await addToModule(parsed.target, parsed.ds);
+      if (added) counters[parsed.target]++;
       else counters.duplicados++;
     } catch(e){
       console.error('Erro lendo', url, e);
@@ -994,6 +1074,7 @@ async function autoLoadFromServer(silent){
 
   for (const key of Object.keys(MODULES)) finalizeModule(MODULES[key]);
   hideLoading();
+  hideHelpCard();
 
   const parts = [];
   if (counters.superbi)  parts.push(`Super BI: ${counters.superbi}`);
@@ -1002,8 +1083,50 @@ async function autoLoadFromServer(silent){
   if (counters.ignorados) parts.push(`ignorados: ${counters.ignorados}`);
   if (counters.duplicados) parts.push(`duplicados: ${counters.duplicados}`);
 
-  setLoadInfo(`✅ Carregados via ${origem} — ${files.length} arquivo(s) — ${parts.join(' · ') || 'nada novo'}`);
+  setLoadInfo(`✅ ${files.length} arquivo(s) via ${from} — ${parts.join(' · ') || 'nada novo'}`);
 }
+
+/* =========================================================
+   CARD DE AJUDA (files.json)
+   ========================================================= */
+const helpCard = document.getElementById('helpCard');
+function showHelpCard(){ helpCard.classList.add('show'); }
+function hideHelpCard(){ helpCard.classList.remove('show'); }
+
+document.getElementById('copySampleBtn').addEventListener('click', () => {
+  const pre = document.getElementById('sampleJson');
+  pre.style.display = pre.style.display === 'none' ? 'block' : 'none';
+});
+
+document.getElementById('genFilesJsonBtn').addEventListener('click', () => {
+  document.getElementById('genDirInput').click();
+});
+
+document.getElementById('genDirInput').addEventListener('change', async e => {
+  const files = Array.from(e.target.files)
+    .filter(f => /\.(xlsx|xls|csv)$/i.test(f.name))
+    .map(f => f.name);
+
+  if (!files.length){
+    alert('Nenhum arquivo .xlsx/.xls/.csv encontrado nessa pasta.');
+    return;
+  }
+
+  const json = JSON.stringify(files, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'files.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+  alert(`✅ files.json gerado com ${files.length} arquivo(s).\n\n` +
+        `Suba esse arquivo para a mesma pasta do index.html. Depois, clique em ` +
+        `"🔄 Recarregar" e o painel carregará tudo automaticamente.`);
+});
 
 /* =========================================================
    UPLOAD MANUAL
@@ -1048,15 +1171,16 @@ async function handleMultipleFiles(fileList){
     loadingSub.textContent = `Lendo ${i+1}/${files.length}: ${f.name}`;
     try {
       const buf = await f.arrayBuffer();
-      const result = await processBuffer(buf, f.name);
-      if (!result){ counters.ignorados++; continue; }
-      const added = await addToModule(result.target, result.ds);
-      if (added) counters[result.target]++;
+      const parsed = await loadFromArrayBuffer(buf, f.name);
+      if (!parsed){ counters.ignorados++; continue; }
+      const added = await addToModule(parsed.target, parsed.ds);
+      if (added) counters[parsed.target]++;
       else counters.duplicados++;
     } catch(e){ console.error(e); counters.ignorados++; }
   }
   for (const key of Object.keys(MODULES)) finalizeModule(MODULES[key]);
   hideLoading();
+  hideHelpCard();
   setLoadInfo(`✅ Manual — Super BI: ${counters.superbi} · Conviva: ${counters.conviva} · ATPL: ${counters.atpl} · Ignorados: ${counters.ignorados} · Duplicados: ${counters.duplicados}`);
 }
 
@@ -1064,7 +1188,6 @@ async function handleMultipleFiles(fileList){
    BOTÃO RECARREGAR
    ========================================================= */
 document.getElementById('reloadBtn').addEventListener('click', () => {
-  // Limpa tudo
   for (const m of Object.values(MODULES)){
     m.datasets = []; m.metrics = []; m.entities = [];
     m.selectedEntities = new Set(['__MEDIA__']);
@@ -1384,7 +1507,6 @@ function renderControls(m){
   btn.textContent = isConsolOn ? '✓ Consolidado incluído' : '➕ Incluir Consolidado';
 }
 
-// Wire dos controles por módulo
 for (const key of Object.keys(MODULES)){
   document.querySelectorAll(`input[name="selMode-${key}"]`).forEach(r => {
     r.addEventListener('change', e => {
@@ -1597,7 +1719,6 @@ function renderTables(m){
   const lastDs = m.datasets[m.datasets.length - 1];
   const lastLabel = lastDs ? lastDs.label : '';
 
-  /* Tabela 1 */
   const metrics = m.metrics.filter(mt => m.selectedMetrics.has(mt.key));
   const t1 = document.getElementById(`tableIndexes-${m.key}`);
   let head = `<thead><tr>
@@ -1633,7 +1754,6 @@ function renderTables(m){
   });
   t1.innerHTML = head + `<tbody>${body}</tbody>`;
 
-  /* Tabela 2 */
   const sel = document.getElementById(`tableMetric-${m.key}`);
   sel.innerHTML = m.metrics.map(mt =>
     `<option value="${esc(mt.key)}" ${mt.key === m.tableMetric ? 'selected' : ''}>${esc(mt.label)}</option>`).join('');
@@ -1858,7 +1978,6 @@ function buildResumoTable(m, entity){
    INICIALIZAÇÃO AUTOMÁTICA
    ========================================================= */
 window.addEventListener('DOMContentLoaded', () => {
-  // Pequeno delay para garantir que bibliotecas CDN terminaram
   setTimeout(() => autoLoadFromServer(false), 300);
 });
 </script>
