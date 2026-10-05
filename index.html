@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Painel Consolidado — Super BI · Conviva · Planejamento de Aula</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -44,31 +43,6 @@
   .global-bar button.primary:hover{ background:#0f766e; }
   .global-bar .load-info{ font-size:12px; color:#94a3b8; }
 
-  .help-card{
-    display:none;
-    background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);
-    border:1px solid #f59e0b; border-radius:12px; padding:14px 16px;
-    margin-bottom:14px; color:#78350f;
-  }
-  .help-card.show{ display:block; }
-  .help-card h3{ margin:0 0 6px; font-size:14px; display:flex; align-items:center; gap:8px; }
-  .help-card p{ margin:6px 0; font-size:12.5px; line-height:1.5; }
-  .help-card code{ background:rgba(255,255,255,.6); border-radius:4px; padding:1px 6px; font-size:12px; }
-  .help-card .actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
-  .help-card .actions button{
-    background:#78350f; color:#fff; border:none; border-radius:8px;
-    padding:8px 14px; font-size:12.5px; font-weight:600; cursor:pointer;
-    font-family:inherit; transition:.15s;
-  }
-  .help-card .actions button:hover{ background:#92400e; }
-  .help-card .actions button.secondary{ background:#fff; color:#78350f; border:1px solid #f59e0b; }
-  .help-card .actions button.secondary:hover{ background:#fffbeb; }
-  .help-card pre{
-    background:#fff; border:1px solid #fbbf24; border-radius:8px;
-    padding:10px 12px; font-size:11.5px; max-height:180px; overflow:auto;
-    margin-top:8px; color:#1e293b; font-family:ui-monospace,Menlo,Consolas,monospace;
-  }
-
   .tabs{
     display:flex; gap:6px; flex-wrap:wrap;
     background:#fff; border:1px solid var(--border); border-radius:12px;
@@ -103,13 +77,6 @@
   .hidden{display:none !important}
   .muted{color:var(--muted)}
   .small{font-size:12px}
-
-  .drop{border:2px dashed #c3cede;border-radius:12px;background:#f8fafc;padding:22px 16px;
-        text-align:center;cursor:pointer;transition:.15s}
-  .drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
-  .drop-icon{font-size:28px;line-height:1}
-  .drop p{margin:6px 0 4px;font-size:13px}
-  .drop code{background:#e8eef7;border-radius:4px;padding:1px 5px;font-size:12px}
 
   .periods-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
   .period-list{display:flex;flex-direction:column;gap:6px}
@@ -281,6 +248,11 @@
         border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
   @keyframes spin{to{transform:rotate(360deg)}}
 
+  .empty-panel{
+    text-align:center; padding:48px 20px; color:var(--muted);
+    background:#fff; border:2px dashed var(--border); border-radius:14px;
+  }
+
   @media(max-width:1100px){ .charts-grid{grid-template-columns:1fr} }
   @media(max-width:860px){
     .controls-grid{grid-template-columns:1fr}
@@ -296,33 +268,15 @@
 
   <header class="hero">
     <h1>📊 Painel Consolidado — Super BI · Conviva · Planejamento de Aula</h1>
-    <p>Painel único com quatro abas. Os arquivos são carregados <strong>automaticamente</strong>
-       da pasta <code>excel/</code> da hospedagem, classificados pelo cabeçalho e distribuídos
-       para a aba correta. O <strong>Resumo da Escola</strong> consolida tudo em tabelas.</p>
+    <p>Carregamento automático a partir dos três CSVs consolidados. O painel busca
+       <code>super_bi.csv</code>, <code>conviva.csv</code> e <code>planejamento_aula.csv</code>
+       (na pasta <code>excel/</code> ou na raiz) e distribui em quatro abas.</p>
   </header>
 
   <div class="global-bar">
-    <span class="title">📁 Arquivos (pasta <code>excel/</code>)</span>
+    <span class="title">📁 Fontes</span>
     <button id="reloadBtn" class="primary">🔄 Recarregar</button>
     <span class="load-info" id="loadInfo">Inicializando…</span>
-  </div>
-
-  <!-- Card de ajuda — apenas se a automação falhar completamente -->
-  <div class="help-card" id="helpCard">
-    <h3>⚙️ Como habilitar o carregamento automático</h3>
-    <p>Não consegui listar a pasta <code>excel/</code> diretamente. Crie um arquivo
-       <code>excel/files.json</code> na hospedagem com a lista dos arquivos. Depois disso,
-       o painel carregará tudo sozinho, sem nenhum clique.</p>
-    <div class="actions">
-      <button id="copySampleBtn" class="secondary">📋 Ver exemplo de files.json</button>
-    </div>
-    <pre id="sampleJson" style="display:none">[
-  "AVARE (12).xlsx",
-  "AVARE (13).xlsx",
-  "superbi (1).xlsx",
-  "superbi (2).xlsx",
-  "atpl (1).xlsx"
-]</pre>
   </div>
 
   <nav class="tabs" id="tabsNav">
@@ -342,8 +296,8 @@
 <div id="loading" class="hidden">
   <div class="box">
     <div class="spinner"></div>
-    <div class="t">Carregando arquivos…</div>
-    <div class="s" id="loadingSub">Isso pode levar alguns segundos.</div>
+    <div class="t">Carregando dados…</div>
+    <div class="s" id="loadingSub">Buscando os CSVs…</div>
   </div>
 </div>
 
@@ -351,24 +305,26 @@
 /* =========================================================
    PLUGIN DATALABELS
    ========================================================= */
-if (window.ChartDataLabels && window.Chart){
-  Chart.register(ChartDataLabels);
-}
+if (window.ChartDataLabels && window.Chart){ Chart.register(ChartDataLabels); }
 
 /* =========================================================
-   PASTA DOS ARQUIVOS
-   ========================================================= */
-const EXCEL_DIR = 'excel/';
-const EXCEL_DIR_ALT = './excel/';
-
-/* =========================================================
-   HELPERS
+   CONSTANTES
    ========================================================= */
 const PALETTE = ['#2563eb','#dc2626','#16a34a','#f59e0b','#7c3aed','#0891b2',
                  '#db2777','#65a30d','#ea580c','#4f46e5','#0d9488','#b45309',
                  '#9333ea','#475569','#e11d48','#0ea5e9'];
 const CONSOLIDADO_COLOR = '#0f172a';
 
+/* Caminhos candidatos para os CSVs (na ordem em que serão tentados) */
+const CSV_SOURCES = {
+  superbi: ['excel/super_bi.csv', 'super_bi.csv', './excel/super_bi.csv'],
+  conviva: ['excel/conviva.csv', 'conviva.csv', './excel/conviva.csv'],
+  atpl:    ['excel/planejamento_aula.csv', 'planejamento_aula.csv', './excel/planejamento_aula.csv'],
+};
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pad = n => String(n).padStart(2,'0');
 
@@ -380,106 +336,136 @@ function fmtPct(n){
   if (n === null || n === undefined || !isFinite(n)) return '—';
   return (n > 0 ? '+' : '') + n.toLocaleString('pt-BR', {minimumFractionDigits:1, maximumFractionDigits:1}) + '%';
 }
-function toNum(v){
-  if (v === null || v === undefined) return null;
-  if (typeof v === 'number') return isFinite(v) ? v : null;
-  let s = String(v).trim();
-  if (!s) return null;
-  if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g,'').replace(',', '.');
-  else if (s.includes(',') && !s.includes('.')) s = s.replace(',', '.');
-  s = s.replace(/%/g,'').replace(/\s/g,'');
-  if (!/^-?\d*\.?\d+$/.test(s)) return null;
-  const n = Number(s);
-  return isFinite(n) ? n : null;
-}
 function normalizeLabel(label){
   return String(label || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 }
-function cleanHeader(h){
-  if (h == null) return '';
-  let s = String(h).trim();
-  const m = s.match(/\[([^\]]+)\]\s*$/);
-  if (m) s = m[1].trim();
-  s = s.replace(/^['"]+|['"]+$/g, '').trim();
-  s = s.replace(/\s+/g, ' ');
-  return s;
-}
 
 /* =========================================================
-   PERÍODO
+   PARSE CSV (linha a linha, com aspas)
    ========================================================= */
-function extractPeriodFromFilters(ws){
-  const aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:null, blankrows:false});
-  for (const row of aoa){
-    if (!row) continue;
-    for (const cell of row){
-      if (cell == null) continue;
-      const s = String(cell);
-      if (!/Filtros\s+aplicados|Intervalo_(Ultima_Semana|Semana_Atual)|Intervalo_Semana\b/i.test(s)) continue;
-      const txt = s.replace(/<br\s*\/?>/gi, '\n');
-      const m = txt.match(
-        /Intervalo_(?:Ultima_Semana|Semana_Atual|Semana)\s+é\s+(\d{1,3})\s*[-–—]\s*(\d{1,2})\/(\d{1,2})\s*(?:a|à|ate|até)\s*(\d{1,2})\/(\d{1,2})/i
-      );
-      if (m){
-        const w = +m[1], d1 = +m[2], mo1 = +m[3], d2 = +m[4], mo2 = +m[5];
-        return { week:w,
-          label:`Semana ${pad(w)} · ${pad(d1)}/${pad(mo1)} a ${pad(d2)}/${pad(mo2)}`,
-          short:`S${pad(w)}`, sortKey:w, explicit:true, relative:null };
-      }
-      if (/Intervalo_(?:Ultima_Semana|Semana_Atual)\s+é\s+Semana\s+Anterior/i.test(txt)){
-        return { week:null, label:'Semana Anterior', short:'Anterior', sortKey:null, explicit:false, relative:'previous' };
-      }
-      if (/Intervalo_(?:Ultima_Semana|Semana_Atual)\s+é\s+Semana\s+Atual/i.test(txt)){
-        return { week:null, label:'Semana Atual', short:'Atual', sortKey:null, explicit:false, relative:'current' };
-      }
+function parseCSVLine(line){
+  const out = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++){
+    const c = line[i];
+    if (inQ){
+      if (c === '"'){
+        if (line[i+1] === '"'){ cur += '"'; i++; }
+        else inQ = false;
+      } else cur += c;
+    } else {
+      if (c === ','){ out.push(cur); cur = ''; }
+      else if (c === '"') inQ = true;
+      else cur += c;
     }
   }
-  return null;
-}
-function detectPeriodFromName(fileName){
-  const base = fileName.replace(/\.[^.]+$/, '');
-  let m;
-  m = base.match(/(20\d{2})[.\-_](\d{1,2})[.\-_](\d{1,2})/);
-  if (m){ const y=+m[1],mo=+m[2],d=+m[3];
-    return { week:null, label:`${pad(d)}/${pad(mo)}/${y}`, short:`${pad(d)}/${pad(mo)}`,
-             sortKey: Date.UTC(y,mo-1,d), explicit:false, relative:null }; }
-  m = base.match(/(\d{1,2})[.\-_](\d{1,2})[.\-_](20\d{2}|\d{2})/);
-  if (m){ const d=+m[1],mo=+m[2]; let y=+m[3]; if (y<100) y+=2000;
-    return { week:null, label:`${pad(d)}/${pad(mo)}/${y}`, short:`${pad(d)}/${pad(mo)}`,
-             sortKey: Date.UTC(y,mo-1,d), explicit:false, relative:null }; }
-  m = base.match(/(\d{1,2})\s*[-–]\s*(\d{1,2})\/(\d{1,2})\s*(?:a|à|ate|até)\s*(\d{1,2})\/(\d{1,2})/i);
-  if (m){ const w=+m[1];
-    return { week:w, label:`Semana ${pad(w)} · ${pad(+m[2])}/${pad(+m[3])} a ${pad(+m[4])}/${pad(+m[5])}`,
-             short:`S${pad(w)}`, sortKey:w, explicit:true, relative:null }; }
-  m = base.match(/semana[\s\-_.]*(\d{1,3})/i);
-  if (m){ const w=+m[1];
-    return { week:w, label:`Semana ${pad(w)}`, short:`S${pad(w)}`, sortKey:w, explicit:true, relative:null }; }
-  return { week:null, label: base, short: base, sortKey:null, explicit:false, relative:null };
+  out.push(cur);
+  return out;
 }
 
 /* =========================================================
-   HEADER / ROWS
+   CONVERSÃO DE CSV EM DATASETS POR MÓDULO
    ========================================================= */
-function findHeaderRow(aoa){
-  for (let i = 0; i < Math.min(aoa.length, 60); i++){
-    const row = aoa[i] || [];
-    if (row.some(c => typeof c === 'string' && /^escolas?$/i.test(c.trim()))) return i;
+function buildDatasetsFromCSV(csvText){
+  // Remove BOM e normaliza quebras
+  const text = csvText.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
+  const lines = text.split('\n');
+  if (lines.length < 2) return [];
+
+  // Cabeçalho
+  const header = parseCSVLine(lines[0]).map(h => h.trim());
+  const idx = {
+    arquivo:  header.indexOf('arquivo'),
+    semana:   header.indexOf('semana'),
+    periodo:  header.indexOf('periodo'),
+    escola:   header.indexOf('escola'),
+    metrica:  header.indexOf('metrica'),
+    valor:    header.indexOf('valor'),
+    tipo:     header.indexOf('tipo_valor'),
+  };
+  if (idx.arquivo < 0 || idx.escola < 0 || idx.metrica < 0 || idx.valor < 0){
+    console.warn('CSV com cabeçalho inesperado:', header);
+    return [];
   }
-  return -1;
-}
-function collectDataRows(aoa, headerRowIdx, nameIdx){
-  const dataRows = [];
-  let totalRowRaw = null;
-  for (let i = headerRowIdx + 1; i < aoa.length; i++){
-    const row = aoa[i] || [];
-    const raw = row[nameIdx];
-    const name = raw == null ? '' : String(raw).trim();
-    if (!name) continue;
-    if (/^filtros aplicados/i.test(name)) break;
-    if (/^total$/i.test(name)){ totalRowRaw = row; continue; }
-    dataRows.push(row);
+
+  // Agrupa por arquivo
+  const byFile = new Map();
+  for (let i = 1; i < lines.length; i++){
+    const line = lines[i];
+    if (!line || !line.trim()) continue;
+    const cols = parseCSVLine(line);
+    const arquivo  = (cols[idx.arquivo]  || '').trim();
+    const escola   = (cols[idx.escola]   || '').trim();
+    const metrica  = (cols[idx.metrica]  || '').trim();
+    const valorStr = (cols[idx.valor]    || '').trim();
+    const tipo     = idx.tipo >= 0 ? (cols[idx.tipo] || 'numero').trim() : 'numero';
+    const semana   = idx.semana  >= 0 ? (cols[idx.semana]  || '').trim() : '';
+    const periodo  = idx.periodo >= 0 ? (cols[idx.periodo] || '').trim() : '';
+
+    if (!arquivo || !escola || !metrica) continue;
+    const valor = parseFloat(valorStr);
+    if (!isFinite(valor)) continue;
+
+    if (!byFile.has(arquivo)){
+      byFile.set(arquivo, {
+        semana, periodo,
+        rows: new Map(),          // escola → { metrica: valor }
+        types: new Map(),         // metrica → 'numero' | 'percentual'
+        order: [],                // ordem de aparição das métricas
+      });
+    }
+    const entry = byFile.get(arquivo);
+    if (!entry.rows.has(escola)) entry.rows.set(escola, {});
+    entry.rows.get(escola)[metrica] = valor;
+    if (!entry.types.has(metrica)){
+      entry.types.set(metrica, tipo);
+      entry.order.push(metrica);
+    }
   }
-  return { dataRows, totalRowRaw };
+
+  // Constrói os datasets
+  const datasets = [];
+  for (const [arquivo, entry] of byFile){
+    const week = /^\d+$/.test(entry.semana) ? parseInt(entry.semana, 10) : null;
+    const label = entry.periodo || arquivo;
+    const short = week !== null ? `S${pad(week)}` : label;
+
+    // Métricas do dataset (ordem original do CSV)
+    const metrics = {};
+    for (const name of entry.order){
+      const tipo = entry.types.get(name);
+      metrics[name] = {
+        key: name,
+        label: name,
+        isPercent: tipo === 'percentual',
+        peso: null,
+      };
+    }
+
+    // Linhas (escolas) + linha Total
+    const rows = [];
+    let totalRow = null;
+    for (const [escola, vals] of entry.rows){
+      if (/^total\s*\(planilha\)$/i.test(escola) || /^total$/i.test(escola)){
+        totalRow = { nome: 'Total', values: vals };
+      } else {
+        rows.push({ nome: escola, values: vals });
+      }
+    }
+
+    datasets.push({
+      id: 'ds_' + Math.random().toString(36).slice(2,9),
+      fileName: arquivo,
+      week, periodSource: 'csv',
+      label, short, sortKey: week,
+      explicitWeek: week !== null,
+      relativeWeek: null,
+      userEdited: false,
+      metrics, rows, totalRow,
+    });
+  }
+
+  return datasets;
 }
 
 /* =========================================================
@@ -488,46 +474,6 @@ function collectDataRows(aoa, headerRowIdx, nameIdx){
 const MODULE_CFG = {
   superbi: {
     title: 'Super BI', icon: '📊', label: 'Índices Escolares',
-    parseWorkbook(wb, fileName){
-      const sheetName = wb.SheetNames.includes('Export') ? 'Export' : wb.SheetNames[0];
-      const ws = wb.Sheets[sheetName]; if (!ws) return null;
-      const aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null, blankrows:true});
-      const hIdx = findHeaderRow(aoa); if (hIdx === -1) return null;
-      const header = (aoa[hIdx] || []).map(c => c == null ? '' : String(c).replace(/\s+/g,' ').trim());
-      const nameIdx = header.findIndex(h => /^escolas?$/i.test(h)); if (nameIdx === -1) return null;
-      const headerJoin = header.join('|').toLowerCase();
-      if (!/nota final|aluno presente|professor presente/.test(headerJoin)) return null;
-      const { dataRows, totalRowRaw } = collectDataRows(aoa, hIdx, nameIdx);
-      const isMetric = header.map((h, idx) => {
-        if (idx === nameIdx) return false;
-        if (!h || h.startsWith('_')) return false;
-        let nonEmpty = 0, numeric = 0;
-        for (const row of dataRows){
-          const v = row[idx];
-          if (v === null || v === undefined || String(v).trim() === '') continue;
-          nonEmpty++; if (toNum(v) !== null) numeric++;
-        }
-        return nonEmpty > 0 && (numeric / nonEmpty) >= 0.6;
-      });
-      const metrics = {};
-      header.forEach((h, idx) => {
-        if (!isMetric[idx]) return;
-        const m = h.match(/\(([\d.,]+)\)\s*$/);
-        const peso = m ? toNum(m[1]) : null;
-        const label = m ? h.slice(0, m.index).trim() : h;
-        metrics[h] = { key:h, label, isPercent:false, peso };
-      });
-      const buildValues = row => { const v = {};
-        header.forEach((h, idx) => { if (isMetric[idx]) v[h] = toNum(row[idx]); }); return v; };
-      const rows = dataRows.map(row => ({ nome:String(row[nameIdx]).trim(), values:buildValues(row) }));
-      const totalRow = totalRowRaw ? { nome:'Total', values:buildValues(totalRowRaw) } : null;
-      let period = extractPeriodFromFilters(ws); let periodSource = 'filtro';
-      if (!period){ period = detectPeriodFromName(fileName); periodSource = 'arquivo'; }
-      return { id:'ds_'+Math.random().toString(36).slice(2,9), fileName, week:period.week, periodSource,
-               label:period.label, short:period.short, sortKey:period.sortKey,
-               explicitWeek:!!period.explicit, relativeWeek:period.relative||null,
-               userEdited:false, metrics, rows, totalRow };
-    },
     formatValue(metric, value){
       if (value == null || !isFinite(value)) return '—';
       const L = normalizeLabel(metric.label);
@@ -565,76 +511,14 @@ const MODULE_CFG = {
       return '';
     },
     preferredTableMetric(metrics){
-      return metrics.find(m => m.key === 'Nota Final')?.key || metrics[0]?.key || null;
+      const exact = metrics.find(m => m.key === 'Nota Final');
+      return exact?.key || metrics[0]?.key || null;
     },
     pairKey(){ return null; }
   },
 
   conviva: {
     title: 'Conviva', icon: '🏫', label: 'Conviva (ocorrências)',
-    parseWorkbook(wb, fileName){
-      const sheetName = wb.SheetNames.includes('Export') ? 'Export' : wb.SheetNames[0];
-      const ws = wb.Sheets[sheetName]; if (!ws) return null;
-      const aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null, blankrows:true});
-      const hIdx = findHeaderRow(aoa); if (hIdx === -1) return null;
-      const rawHeader = (aoa[hIdx] || []);
-      const cleanedHeader = rawHeader.map(cleanHeader);
-      const nameIdx = cleanedHeader.findIndex(h => /^escolas?$/i.test(h)); if (nameIdx === -1) return null;
-      const headerJoin = cleanedHeader.join('|').toLowerCase();
-      if (!/total de ocorr|chamados amarelos|chamados vermelhos/.test(headerJoin)) return null;
-      const { dataRows, totalRowRaw } = collectDataRows(aoa, hIdx, nameIdx);
-      const isMetric = rawHeader.map((h, idx) => {
-        if (idx === nameIdx) return false;
-        const ch = cleanedHeader[idx];
-        if (!ch || /^_?dummy/i.test(ch) || /^filtros/i.test(ch)) return false;
-        let nonEmpty = 0, numeric = 0;
-        for (const row of dataRows){
-          const v = row[idx];
-          if (v === null || v === undefined || String(v).trim() === '') continue;
-          nonEmpty++; if (toNum(v) !== null) numeric++;
-        }
-        return nonEmpty > 0 && (numeric / nonEmpty) >= 0.5;
-      });
-      const metrics = {}, colToKey = {}; let lastBase = null;
-      rawHeader.forEach((raw, idx) => {
-        if (idx === nameIdx || !isMetric[idx]) return;
-        const ch = cleanedHeader[idx]; if (!ch) return;
-        if (ch === '(%)'){
-          if (lastBase){
-            const key = lastBase + '__pct', label = lastBase + ' (%)';
-            if (!metrics[key]) metrics[key] = { key, label, isPercent:true, peso:null };
-            colToKey[idx] = key;
-          }
-          return;
-        }
-        const wm = ch.match(/\((\d+(?:[.,]\d+)?)\)\s*$/);
-        const peso = wm ? toNum(wm[1]) : null;
-        const rawLabel = wm ? ch.slice(0, wm.index).trim() : ch;
-        if (/\(%\)/.test(rawLabel)){
-          const cleanLabel = rawLabel.replace(/\(%\)\s*/g,'').trim(); if (!cleanLabel) return;
-          const key = cleanLabel + '__pct';
-          const label = /^\(%\)/.test(rawLabel) ? rawLabel : (cleanLabel + ' (%)');
-          if (!metrics[key]) metrics[key] = { key, label, isPercent:true, peso };
-          colToKey[idx] = key;
-        } else {
-          if (!rawLabel) return;
-          const key = rawLabel + '__val';
-          if (!metrics[key]) metrics[key] = { key, label:rawLabel, isPercent:false, peso };
-          colToKey[idx] = key;
-          lastBase = rawLabel;
-        }
-      });
-      const buildValues = row => { const v = {};
-        Object.entries(colToKey).forEach(([idx,key]) => { v[key] = toNum(row[+idx]); }); return v; };
-      const rows = dataRows.map(row => ({ nome:String(row[nameIdx]).trim(), values:buildValues(row) }));
-      const totalRow = totalRowRaw ? { nome:'Total', values:buildValues(totalRowRaw) } : null;
-      let period = extractPeriodFromFilters(ws); let periodSource = 'filtro';
-      if (!period){ period = detectPeriodFromName(fileName); periodSource = 'arquivo'; }
-      return { id:'ds_'+Math.random().toString(36).slice(2,9), fileName, week:period.week, periodSource,
-               label:period.label, short:period.short, sortKey:period.sortKey,
-               explicitWeek:!!period.explicit, relativeWeek:period.relative||null,
-               userEdited:false, metrics, rows, totalRow };
-    },
     formatValue(metric, value){
       if (value == null || !isFinite(value)) return '—';
       if (metric.isPercent) return (value*100).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:1}) + '%';
@@ -667,84 +551,19 @@ const MODULE_CFG = {
       return '';
     },
     preferredTableMetric(metrics){
-      const pref = ['Total de Ocorrências__val','Chamados Amarelos__val','Chamados Vermelhos__val'];
+      const pref = ['Total de Ocorrências','Chamados Amarelos','Chamados Vermelhos'];
       return pref.find(k => metrics.some(m => m.key === k)) || metrics[0]?.key || null;
     },
     pairKey(metricKey){
-      if (metricKey.endsWith('__pct')){
-        const clean = metricKey.replace(/__pct$/,'');
-        const pairs = { 'Amarelos':'Chamados Amarelos__val', 'Vermelhos':'Chamados Vermelhos__val' };
-        return pairs[clean] || null;
-      }
+      const L = normalizeLabel(metricKey);
+      if (L.includes('(%) amarelos')) return 'Chamados Amarelos';
+      if (L.includes('(%) vermelhos')) return 'Chamados Vermelhos';
       return null;
     }
   },
 
   atpl: {
     title: 'Planejamento de Aula', icon: '📅', label: 'Planejamento de Aula',
-    parseWorkbook(wb, fileName){
-      const sheetName = wb.SheetNames.includes('Export') ? 'Export' : wb.SheetNames[0];
-      const ws = wb.Sheets[sheetName]; if (!ws) return null;
-      const aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null, blankrows:true});
-      const hIdx = findHeaderRow(aoa); if (hIdx === -1) return null;
-      const rawHeader = (aoa[hIdx] || []);
-      const cleanedHeader = rawHeader.map(cleanHeader);
-      const nameIdx = cleanedHeader.findIndex(h => /^escolas?$/i.test(h)); if (nameIdx === -1) return null;
-      const headerJoin = cleanedHeader.join('|').toLowerCase();
-      if (!/docentes?|atpl/.test(headerJoin)) return null;
-      const { dataRows, totalRowRaw } = collectDataRows(aoa, hIdx, nameIdx);
-      const isMetric = rawHeader.map((h, idx) => {
-        if (idx === nameIdx) return false;
-        const ch = cleanedHeader[idx];
-        if (!ch || /^_?dummy/i.test(ch) || /^filtros/i.test(ch)) return false;
-        let nonEmpty = 0, numeric = 0;
-        for (const row of dataRows){
-          const v = row[idx];
-          if (v === null || v === undefined || String(v).trim() === '') continue;
-          nonEmpty++; if (toNum(v) !== null) numeric++;
-        }
-        return nonEmpty > 0 && (numeric / nonEmpty) >= 0.5;
-      });
-      const metrics = {}, colToKey = {}; let lastBase = null;
-      rawHeader.forEach((raw, idx) => {
-        if (idx === nameIdx || !isMetric[idx]) return;
-        const ch = cleanedHeader[idx]; if (!ch) return;
-        if (ch === '(%)'){
-          if (lastBase){
-            const key = lastBase + '__pct', label = lastBase + ' (%)';
-            if (!metrics[key]) metrics[key] = { key, label, isPercent:true, peso:null };
-            colToKey[idx] = key;
-          }
-          return;
-        }
-        const wm = ch.match(/\((\d+(?:[.,]\d+)?)\)\s*$/);
-        const peso = wm ? toNum(wm[1]) : null;
-        const rawLabel = wm ? ch.slice(0, wm.index).trim() : ch;
-        if (/\(%\)/.test(rawLabel)){
-          const cleanLabel = rawLabel.replace(/\(%\)\s*/g,'').trim(); if (!cleanLabel) return;
-          const key = cleanLabel + '__pct';
-          const label = /^\(%\)/.test(rawLabel) ? rawLabel : (cleanLabel + ' (%)');
-          if (!metrics[key]) metrics[key] = { key, label, isPercent:true, peso };
-          colToKey[idx] = key;
-        } else {
-          if (!rawLabel) return;
-          const key = rawLabel + '__val';
-          if (!metrics[key]) metrics[key] = { key, label:rawLabel, isPercent:false, peso };
-          colToKey[idx] = key;
-          lastBase = rawLabel;
-        }
-      });
-      const buildValues = row => { const v = {};
-        Object.entries(colToKey).forEach(([idx,key]) => { v[key] = toNum(row[+idx]); }); return v; };
-      const rows = dataRows.map(row => ({ nome:String(row[nameIdx]).trim(), values:buildValues(row) }));
-      const totalRow = totalRowRaw ? { nome:'Total', values:buildValues(totalRowRaw) } : null;
-      let period = extractPeriodFromFilters(ws); let periodSource = 'filtro';
-      if (!period){ period = detectPeriodFromName(fileName); periodSource = 'arquivo'; }
-      return { id:'ds_'+Math.random().toString(36).slice(2,9), fileName, week:period.week, periodSource,
-               label:period.label, short:period.short, sortKey:period.sortKey,
-               explicitWeek:!!period.explicit, relativeWeek:period.relative||null,
-               userEdited:false, metrics, rows, totalRow };
-    },
     formatValue(metric, value){
       if (value == null || !isFinite(value)) return '—';
       if (metric.isPercent) return (value*100).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:1}) + '%';
@@ -772,15 +591,13 @@ const MODULE_CFG = {
       return '';
     },
     preferredTableMetric(metrics){
-      const pref = ['de Docentes Ativos no Período__pct','ATPLs Concluídos__pct','Total Docentes Previstos__val'];
+      const pref = ['(%) de Docentes Ativos no Período','(%) ATPLs Concluídos','Total Docentes Previstos'];
       return pref.find(k => metrics.some(m => m.key === k)) || metrics[0]?.key || null;
     },
     pairKey(metricKey){
-      if (metricKey.endsWith('__pct')){
-        const clean = metricKey.replace(/__pct$/,'');
-        if (/docentes ativos/i.test(clean)) return 'Total Docentes Previstos__val';
-        if (/atpls conclui/i.test(clean))   return 'ATPLs Previstos__val';
-      }
+      const L = normalizeLabel(metricKey);
+      if (L.includes('docentes ativos')) return 'Total Docentes Previstos';
+      if (L.includes('atpls conclui'))   return 'ATPLs Previstos';
       return null;
     }
   }
@@ -807,7 +624,6 @@ for (const key of Object.keys(MODULE_CFG)){
    HTML DOS PAINÉIS
    ========================================================= */
 function buildModulePanel(m){
-  const cfg = m.cfg;
   return `
     <section class="card hidden" id="periods-${m.key}">
       <div class="periods-head">
@@ -906,223 +722,42 @@ const loadingEl = document.getElementById('loading');
 const loadingSub = document.getElementById('loadingSub');
 const loadInfoEl = document.getElementById('loadInfo');
 function setLoadInfo(msg){ loadInfoEl.textContent = msg; }
-function showLoading(sub){ loadingSub.textContent = sub || 'Isso pode levar alguns segundos.'; loadingEl.classList.remove('hidden'); }
+function showLoading(sub){ loadingSub.textContent = sub || 'Buscando os CSVs…'; loadingEl.classList.remove('hidden'); }
 function hideLoading(){ loadingEl.classList.add('hidden'); }
 
 /* =========================================================
-   CLASSIFICAÇÃO
+   CARREGAMENTO AUTOMÁTICO DOS CSVs
    ========================================================= */
-function classifyWorkbook(wb){
-  const sheetName = wb.SheetNames.includes('Export') ? 'Export' : wb.SheetNames[0];
-  const ws = wb.Sheets[sheetName]; if (!ws) return null;
-  const aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null, blankrows:true});
-  const hIdx = findHeaderRow(aoa); if (hIdx === -1) return null;
-  const header = (aoa[hIdx] || []).map(c => c == null ? '' : String(c).replace(/\s+/g,' ').trim());
-  const cleaned = header.map(cleanHeader);
-  const join = (cleaned.join('|') + '|' + header.join('|')).toLowerCase();
-  if (/docentes? previstos|atpls? (previstos|conclu)/.test(join)) return 'atpl';
-  if (/total de ocorr|chamados? (amarelos?|vermelhos?)|encaminhado ao psicologo/.test(join)) return 'conviva';
-  if (/nota final|aluno presente|professor presente|saresp nota super/.test(join)) return 'superbi';
-  return null;
+async function fetchText(url){
+  try {
+    const r = await fetch(url, {cache:'no-store'});
+    if (!r.ok) return null;
+    const txt = await r.text();
+    // Detecta HTML retornado por servidor (404 custom)
+    if (/^\s*<\s*(!DOCTYPE|html)/i.test(txt)) return null;
+    return txt;
+  } catch(e){ return null; }
 }
 
-async function addToModule(target, ds){
-  if (!ds) return false;
-  const m = MODULES[target];
-  if (!m) return false;
-  if (m.datasets.some(d => d.fileName === ds.fileName)) return false;
-  m.datasets.push(ds);
-  return true;
-}
-
-async function loadFromArrayBuffer(buf, fileName){
-  const wb = XLSX.read(new Uint8Array(buf), {type:'array'});
-  const target = classifyWorkbook(wb);
-  if (!target) return null;
-  const ds = MODULE_CFG[target].parseWorkbook(wb, fileName);
-  return ds ? { target, ds } : null;
-}
-
-/* =========================================================
-   AUTO-LOAD — busca sempre a pasta excel/
-   ========================================================= */
-
-/** Garante que o caminho final tenha o prefixo excel/ */
-function resolvePath(p){
-  // Se já é URL absoluta
-  if (/^https?:\/\//i.test(p)) return p;
-  // Remove prefixos "./" e "../"
-  p = p.replace(/^(\.\.?\/)+/, '');
-  // Remove barra inicial
-  p = p.replace(/^\/+/, '');
-  // Se já começa com "excel/", mantém
-  if (/^excel\//i.test(p)) return p;
-  // Caso contrário, prefixa
-  return EXCEL_DIR + p;
-}
-
-/** 1. Manifesto JSON dentro de excel/ */
-async function fetchManifest(){
-  const names = ['files.json','manifest.json','arquivos.json','index.json','dados.json','lista.json'];
-  const bases = [EXCEL_DIR, EXCEL_DIR_ALT, './excel/', ''];
-  for (const name of names){
-    for (const base of bases){
-      try {
-        const r = await fetch(base + name, {cache:'no-store'});
-        if (!r.ok) continue;
-        const text = await r.text();
-        if (/^\s*</.test(text)) continue;
-        let data;
-        try { data = JSON.parse(text); } catch(e){ continue; }
-        const list = Array.isArray(data) ? data : (data.files || data.arquivos || data.lista || []);
-        const files = list
-          .filter(f => typeof f === 'string' && /\.(xlsx|xls|csv)$/i.test(f))
-          .map(f => resolvePath(f));
-        if (files.length) return { files, from: base + name };
-      } catch(e){ /* tenta próximo */ }
-    }
-  }
-  return null;
-}
-
-/** 2. Listagem de diretório (Apache/nginx/Python http.server) */
-async function fetchDirectoryListing(){
-  const candidates = ['excel/', './excel/', EXCEL_DIR_ALT, '/excel/'];
-  const re = /href=["']([^"'?#]+?\.(?:xlsx|xls|csv))["']/gi;
-  const found = new Set();
-
-  for (const dir of candidates){
-    try {
-      const r = await fetch(dir, {cache:'no-store'});
-      if (!r.ok) continue;
-      const html = await r.text();
-      if (!/<a\s+href=/i.test(html)) continue;
-
-      let m;
-      re.lastIndex = 0;
-      while ((m = re.exec(html))){
-        let url = decodeURIComponent(m[1]);
-        if (/^https?:\/\//i.test(url)) continue;
-        // Ignora links de navegação (../ etc)
-        if (/^\.\.?\//.test(url)) continue;
-        if (url.startsWith('/')) url = url.slice(1);
-        // Se o link veio da raiz /excel/, precisa reaproveitar o prefixo
-        if (!/^excel\//i.test(url) && !/^https?:\/\//i.test(url)){
-          if (/^\/?excel\/?/.test(dir) || dir.includes('excel/')){
-            url = 'excel/' + url.replace(/^excel\//i,'');
-          }
-        }
-        found.add(url);
+async function loadModuleFromCSV(key){
+  const candidates = CSV_SOURCES[key];
+  for (const url of candidates){
+    const txt = await fetchText(url);
+    if (txt && txt.trim().length){
+      const datasets = buildDatasetsFromCSV(txt);
+      if (datasets.length){
+        return { datasets, from: url };
       }
-    } catch(e){ /* tenta próximo */ }
-  }
-  if (found.size) return { files: [...found], from:'listagem do servidor' };
-  return null;
-}
-
-/** 3. Endpoints dinâmicos dentro de excel/ */
-async function fetchEndpoint(){
-  const endpoints = ['list.php','files.php','arquivos.php','ls.php','api.php','index.php'];
-  const bases = [EXCEL_DIR, EXCEL_DIR_ALT, './excel/'];
-  for (const ep of endpoints){
-    for (const base of bases){
-      try {
-        const r = await fetch(base + ep, {cache:'no-store'});
-        if (!r.ok) continue;
-        const text = await r.text();
-        if (/^\s*<!DOCTYPE html>/i.test(text) && !/\.(xlsx|xls|csv)/i.test(text)) continue;
-        let list;
-        try { list = JSON.parse(text); } catch(e){ list = text.split(/\r?\n/); }
-        const files = (Array.isArray(list) ? list : (list.files || list.arquivos || []))
-          .filter(f => typeof f === 'string' && /\.(xlsx|xls|csv)$/i.test(f))
-          .map(f => resolvePath(f));
-        if (files.length) return { files, from: base + ep };
-      } catch(e){ /* tenta próximo */ }
     }
   }
   return null;
 }
 
-async function autoLoadFromServer(){
-  if (location.protocol === 'file:'){
-    setLoadInfo('⚠️ Aberto localmente (file://). Hospede o painel para carregar automaticamente.');
-    return;
-  }
+async function loadAll(){
+  showLoading('Buscando os três CSVs…');
+  setLoadInfo('🔄 Carregando…');
 
-  showLoading('Procurando arquivos na pasta excel/…');
-  setLoadInfo('🔄 Procurando arquivos…');
-  hideHelpCard();
-
-  let result = await fetchManifest();
-  if (!result) result = await fetchDirectoryListing();
-  if (!result) result = await fetchEndpoint();
-
-  if (!result){
-    hideLoading();
-    setLoadInfo('⚠️ Não foi possível listar a pasta excel/ automaticamente. Veja as instruções.');
-    showHelpCard();
-    return;
-  }
-
-  const { files, from } = result;
-  const counters = { superbi:0, conviva:0, atpl:0, ignorados:0, duplicados:0, falhas:0 };
-
-  for (let i = 0; i < files.length; i++){
-    const url = files[i];
-    const name = decodeURIComponent(url.split('/').pop().split('?')[0]);
-    loadingSub.textContent = `Lendo ${i+1}/${files.length}: ${name}`;
-    try {
-      const res = await fetch(url, {cache:'no-store'});
-      if (!res.ok){ counters.falhas++; continue; }
-      const buf = await res.arrayBuffer();
-      const parsed = await loadFromArrayBuffer(buf, name);
-      if (!parsed){ counters.ignorados++; continue; }
-      const added = await addToModule(parsed.target, parsed.ds);
-      if (added) counters[parsed.target]++;
-      else counters.duplicados++;
-    } catch(e){
-      console.error('Erro lendo', url, e);
-      counters.falhas++;
-    }
-  }
-
-  for (const key of Object.keys(MODULES)) finalizeModule(MODULES[key]);
-  hideLoading();
-  hideHelpCard();
-
-  const parts = [];
-  if (counters.superbi)   parts.push(`Super BI: ${counters.superbi}`);
-  if (counters.conviva)   parts.push(`Conviva: ${counters.conviva}`);
-  if (counters.atpl)      parts.push(`ATPL: ${counters.atpl}`);
-  if (counters.ignorados) parts.push(`ignorados: ${counters.ignorados}`);
-  if (counters.duplicados) parts.push(`duplicados: ${counters.duplicados}`);
-  if (counters.falhas)    parts.push(`falhas: ${counters.falhas}`);
-
-  if (!counters.superbi && !counters.conviva && !counters.atpl){
-    setLoadInfo(`⚠️ Nenhum arquivo válido encontrado em ${from}.`);
-    showHelpCard();
-    return;
-  }
-
-  setLoadInfo(`✅ ${files.length} arquivo(s) via ${from} — ${parts.join(' · ')}`);
-}
-
-/* =========================================================
-   HELP CARD
-   ========================================================= */
-const helpCard = document.getElementById('helpCard');
-function showHelpCard(){ helpCard.classList.add('show'); }
-function hideHelpCard(){ helpCard.classList.remove('show'); }
-
-document.getElementById('copySampleBtn').addEventListener('click', () => {
-  const pre = document.getElementById('sampleJson');
-  pre.style.display = pre.style.display === 'none' ? 'block' : 'none';
-});
-
-/* =========================================================
-   BOTÃO RECARREGAR
-   ========================================================= */
-document.getElementById('reloadBtn').addEventListener('click', () => {
+  // Limpa tudo antes
   for (const m of Object.values(MODULES)){
     m.datasets = []; m.metrics = []; m.entities = [];
     m.selectedEntities = new Set(['__MEDIA__']);
@@ -1132,38 +767,86 @@ document.getElementById('reloadBtn').addEventListener('click', () => {
     renderModule(m);
   }
   updateTabCounts();
-  autoLoadFromServer();
-});
+
+  const summary = [];
+  const loadedKeys = new Set();
+
+  for (const key of ['superbi','conviva','atpl']){
+    loadingSub.textContent = `Lendo ${CSV_SOURCES[key][0]}…`;
+    try {
+      const res = await loadModuleFromCSV(key);
+      if (!res){
+        summary.push(`${MODULE_CFG[key].title}: ❌`);
+        continue;
+      }
+      MODULES[key].datasets = res.datasets;
+      finalizeModule(MODULES[key]);
+      loadedKeys.add(key);
+      summary.push(`${MODULE_CFG[key].title}: ${res.datasets.length} período(s) (${res.from})`);
+    } catch(e){
+      console.error('Erro carregando', key, e);
+      summary.push(`${MODULE_CFG[key].title}: ❌`);
+    }
+  }
+
+  hideLoading();
+
+  if (loadedKeys.size === 0){
+    setLoadInfo('⚠️ Nenhum dos três CSVs foi encontrado. Suba super_bi.csv, conviva.csv e planejamento_aula.csv para a pasta excel/ ou a raiz.');
+  } else {
+    setLoadInfo('✅ ' + summary.join(' · '));
+  }
+
+  if (loadedKeys.has('superbi') || loadedKeys.has('conviva') || loadedKeys.has('atpl')){
+    if (document.querySelector('#tabsNav button.active')?.dataset.tab === 'resumo') renderResumo();
+  }
+}
+
+/* =========================================================
+   BOTÃO RECARREGAR
+   ========================================================= */
+document.getElementById('reloadBtn').addEventListener('click', () => loadAll());
 
 /* =========================================================
    FINALIZAÇÃO / CONSOLIDAÇÃO
    ========================================================= */
 function finalizeModule(m){
-  inferRelativeWeeks(m);
+  // Ordena por semana
   if (!m.manualOrder && m.datasets.length > 1){
     const allHaveKey = m.datasets.every(d => typeof d.sortKey === 'number');
     if (allHaveKey) m.datasets.sort((a,b) => a.sortKey - b.sortKey);
   }
+
+  // Rótulos duplicados
   const counts = {};
   m.datasets.forEach(d => {
     counts[d.label] = (counts[d.label] || 0) + 1;
     if (counts[d.label] > 1) d.label = d.label + ' (' + counts[d.label] + ')';
   });
+
+  // União de métricas (mantém ordem de primeira aparição)
   const metricMap = new Map();
   m.datasets.forEach(d => {
-    Object.values(d.metrics).forEach(mt => { if (!metricMap.has(mt.key)) metricMap.set(mt.key, mt); });
+    Object.values(d.metrics).forEach(mt => {
+      if (!metricMap.has(mt.key)) metricMap.set(mt.key, mt);
+    });
   });
   m.metrics = [...metricMap.values()];
+
+  // Novas métricas entram selecionadas
   m.metrics.forEach(mt => { if (!m.knownMetricKeys.has(mt.key)) m.selectedMetrics.add(mt.key); });
   [...m.selectedMetrics].forEach(k => { if (!metricMap.has(k)) m.selectedMetrics.delete(k); });
   m.knownMetricKeys = new Set(m.metrics.map(mt => mt.key));
 
+  // União de escolas
   const seen = new Set(); const names = [];
   m.datasets.forEach(d => d.rows.forEach(r => {
     if (!seen.has(r.nome)){ seen.add(r.nome); names.push(r.nome); }
   }));
   m.entities = names;
   m.hasTotal = m.datasets.some(d => d.totalRow);
+
+  // Escolas comuns a todos os períodos
   if (m.datasets.length){
     let set = new Set(m.datasets[0].rows.map(r => r.nome));
     m.datasets.slice(1).forEach(d => {
@@ -1178,34 +861,13 @@ function finalizeModule(m){
   [...m.selectedEntities].forEach(e => { if (!validEntities.has(e)) m.selectedEntities.delete(e); });
   if (m.selectedEntities.size === 0) m.selectedEntities.add('__MEDIA__');
   if (!validEntities.has(m.focusEntity)) m.focusEntity = '__MEDIA__';
+
   if (!m.tableMetric || !metricMap.has(m.tableMetric)){
     m.tableMetric = m.cfg.preferredTableMetric(m.metrics);
   }
+
   renderModule(m);
   updateTabCounts();
-}
-
-function inferRelativeWeeks(m){
-  m.datasets.forEach(d => {
-    if (d.relativeWeek && !d.userEdited){
-      d.week = null; d.sortKey = null;
-      if (d.relativeWeek === 'previous'){ d.label = 'Semana Anterior'; d.short = 'Anterior'; }
-      else if (d.relativeWeek === 'current'){ d.label = 'Semana Atual'; d.short = 'Atual'; }
-    }
-  });
-  const explicit = m.datasets.filter(d => d.explicitWeek && typeof d.week === 'number').map(d => d.week);
-  if (!explicit.length) return;
-  const minW = Math.min(...explicit), maxW = Math.max(...explicit);
-  m.datasets.forEach(d => {
-    if (!d.relativeWeek || d.userEdited) return;
-    if (d.relativeWeek === 'previous'){
-      const w = minW - 1;
-      d.week = w; d.sortKey = w; d.label = `Semana ${pad(w)} (Anterior)`; d.short = `S${pad(w)}`;
-    } else if (d.relativeWeek === 'current'){
-      const w = maxW + 1;
-      d.week = w; d.sortKey = w; d.label = `Semana ${pad(w)} (Atual)`; d.short = `S${pad(w)}`;
-    }
-  });
 }
 
 function updateTabCounts(){
@@ -1245,6 +907,7 @@ function getConsolidatedValue(m, ds, metricKey){
   if (!metric) return null;
   const eligible = ds.rows.filter(r => !m.onlyCommon || m.commonSet.has(r.nome));
   if (!eligible.length) return null;
+
   if (metric.isPercent){
     const pairKey = m.cfg.pairKey(metricKey);
     if (pairKey && m.metrics.some(mt => mt.key === pairKey)){
@@ -1263,6 +926,7 @@ function getConsolidatedValue(m, ds, metricKey){
     }
     return n ? sum / n : null;
   }
+
   let sum = 0, hasAny = false;
   for (const r of eligible){
     const v = r.values[metricKey];
@@ -1296,7 +960,22 @@ function renderModule(m){
     const el = document.getElementById(`${suffix}-${m.key}`);
     if (el) el.classList.toggle('hidden', !has);
   }
-  if (!has) return;
+  if (!has){
+    // mostra aviso no painel
+    const panel = document.getElementById(`panel-${m.key}`);
+    if (panel && !panel.querySelector('.empty-panel')){
+      const empty = document.createElement('div');
+      empty.className = 'card empty-panel';
+      empty.innerHTML = `Nenhum dado carregado para <strong>${esc(m.cfg.title)}</strong>.<br>
+        <span class="small muted">Verifique se o arquivo CSV correspondente está na pasta <code>excel/</code>.</span>`;
+      panel.insertBefore(empty, panel.firstChild);
+    }
+    return;
+  }
+  // Remove aviso se existir
+  const panel = document.getElementById(`panel-${m.key}`);
+  panel?.querySelectorAll('.empty-panel').forEach(el => el.remove());
+
   renderPeriods(m); renderControls(m); renderKPIs(m); renderCharts(m); renderTables(m);
 }
 
@@ -1307,13 +986,12 @@ function renderPeriods(m){
     <div class="period-item" data-id="${d.id}">
       <span class="period-idx">${i+1}</span>
       <input type="text" value="${esc(d.label)}" data-role="label" spellcheck="false">
-      ${d.relativeWeek ? `<span class="tag-rel">relativa</span>` : ''}
-      <span class="period-file" title="${esc(d.fileName)} · origem: ${d.periodSource}">
-        ${d.periodSource === 'filtro' ? '📌' : '📄'} ${esc(d.fileName)}
+      <span class="period-file" title="${esc(d.fileName)}">
+        📄 ${esc(d.fileName)}
       </span>
-      <button class="icon-btn" data-act="up">▲</button>
-      <button class="icon-btn" data-act="down">▼</button>
-      <button class="icon-btn" data-act="del">✕</button>
+      <button class="icon-btn" data-act="up" title="Subir">▲</button>
+      <button class="icon-btn" data-act="down" title="Descer">▼</button>
+      <button class="icon-btn" data-act="del" title="Remover">✕</button>
     </div>`).join('');
 }
 
@@ -1771,7 +1449,7 @@ function renderResumo(){
       <div class="resumo-empty">
         <div style="font-size:42px;margin-bottom:8px">📁</div>
         <div style="font-size:15px;font-weight:600;margin-bottom:6px">Nenhum dado carregado</div>
-        <div>Aguarde o carregamento automático.</div>
+        <div>Aguarde o carregamento automático dos CSVs.</div>
       </div>`;
     return;
   }
@@ -1862,10 +1540,10 @@ function buildResumoTable(m, entity){
 }
 
 /* =========================================================
-   INICIALIZAÇÃO AUTOMÁTICA
+   INICIALIZAÇÃO
    ========================================================= */
 window.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => autoLoadFromServer(), 300);
+  setTimeout(() => loadAll(), 200);
 });
 </script>
 </body>
