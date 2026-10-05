@@ -15,7 +15,7 @@
     --green:#16a34a; --green-bg:#86efac; --green-bg-soft:#bbf7d0; --green-ink:#14532d;
     --yellow:#ca8a04; --yellow-bg:#fde047; --yellow-bg-soft:#fef08a; --yellow-ink:#713f12;
     --red:#dc2626; --red-bg:#fca5a5; --red-bg-soft:#fecaca; --red-ink:#7f1d1d;
-    --gold:#f59e0b; --gold-soft:#fef3c7; --gold-ink:#92400e;
+    --purple:#7c3aed; --purple-soft:#ede9fe; --purple-ink:#4c1d95; --purple-ring:rgba(124,58,237,.18);
     --radius:14px;
     --shadow:0 1px 2px rgba(15,23,42,.06), 0 10px 28px -18px rgba(15,23,42,.35);
   }
@@ -100,14 +100,12 @@
   .btn:hover{background:#f1f5fb}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   .btn.primary:hover{background:#1d4ed8}
-  .btn.danger{color:var(--red);border-color:#f3c9c9}
-  .btn.danger:hover{background:#fee2e2}
   .btn.btn-consol{background:#0f172a; color:#fff; border-color:#0f172a; font-weight:600;}
   .btn.btn-consol:hover{ background:#1e293b; }
   .btn.btn-consol.on{ background:#0d9488; border-color:#0d9488; }
-  .btn.btn-edit{ background:linear-gradient(135deg,#f59e0b,#f97316); border:none; color:#fff; font-weight:700;
-        box-shadow:0 2px 8px -2px rgba(245,158,11,.5); }
-  .btn.btn-edit:hover{ background:linear-gradient(135deg,#d97706,#ea580c); }
+  .btn.btn-edit{ background:linear-gradient(135deg,#7c3aed,#a855f7); border:none; color:#fff; font-weight:700;
+        box-shadow:0 2px 10px -2px rgba(124,58,237,.55); }
+  .btn.btn-edit:hover{ background:linear-gradient(135deg,#6d28d9,#9333ea); }
 
   .controls-grid{display:grid;grid-template-columns:minmax(240px,1.1fr) minmax(280px,2fr);gap:18px}
   .ctrl-label{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
@@ -145,7 +143,6 @@
   .picker label{display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 0;cursor:pointer;
         white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .picker input{accent-color:var(--accent);flex:none}
-  .picker .peso{color:var(--muted);font-size:10.5px}
   .picker label.consolidado-opt{
     background:#ecfeff; border:1px solid #a5f3fc; border-radius:6px; padding:3px 7px;
     font-weight:700; color:#0e7490;
@@ -161,7 +158,7 @@
   .kpi.cell-yellow{background:var(--yellow-bg-soft);border-color:var(--yellow-bg)}
   .kpi.cell-red{background:var(--red-bg-soft);border-color:var(--red-bg)}
   .kpi-label{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;
-        text-overflow:ellipsis}
+        text-overflow:ellipsis;padding-right:24px}
   .kpi-value{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:2px 0 4px}
   .kpi.cell-green .kpi-value{color:var(--green-ink)}
   .kpi.cell-yellow .kpi-value{color:var(--yellow-ink)}
@@ -172,29 +169,33 @@
   .kpi-delta.flat{color:var(--muted)}
   .kpi-sub{font-size:10.5px;color:var(--muted);margin-top:2px;line-height:1.35}
 
-  /* Destaque de índice (⭐) */
+  /* Destaque (roxo) — não sobrescreve a cor do farol, apenas adiciona contorno */
   .kpi.highlight{
-    border:2.5px solid var(--gold);
-    box-shadow:0 0 0 3px rgba(245,158,11,.14), 0 6px 20px -10px rgba(245,158,11,.5);
-    background:linear-gradient(135deg, #fffbeb 0%, var(--gold-soft) 100%);
+    border:2.5px solid var(--purple);
+    box-shadow:0 0 0 3px var(--purple-ring), 0 8px 22px -12px rgba(124,58,237,.55);
   }
   .kpi.highlight::after{
-    content:'⭐';
-    position:absolute; top:6px; right:9px;
-    font-size:13px;
+    content:'';
+    position:absolute; top:6px; right:8px;
+    width:18px; height:18px;
+    background:url('image/pin.png') center/contain no-repeat;
   }
-  .kpi.highlight .kpi-label{ color:var(--gold-ink); font-weight:700; }
-  .kpi.highlight .kpi-value{ color:var(--gold-ink); font-size:24px; }
 
   /* ---------- GRÁFICOS ---------- */
   .charts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
   .chart-card{border:1px solid var(--border);border-radius:12px;padding:12px 12px 8px;background:#fff;
-        display:flex;flex-direction:column;transition:.2s}
+        display:flex;flex-direction:column;transition:.2s;position:relative}
   .chart-card.highlight-chart{
-    border:2px solid var(--gold);
-    box-shadow:0 0 0 3px rgba(245,158,11,.12);
+    border:2.5px solid var(--purple);
+    box-shadow:0 0 0 3px var(--purple-ring);
   }
-  .chart-card.highlight-chart .chart-head h3{ color:var(--gold-ink); font-weight:700; }
+  .chart-card.highlight-chart::after{
+    content:'';
+    position:absolute; top:10px; right:52px;
+    width:18px; height:18px;
+    background:url('image/pin.png') center/contain no-repeat;
+    pointer-events:none;
+  }
   .chart-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
   .chart-head h3{margin:0;font-size:13px;font-weight:600;color:#334155}
   .copy-btn{padding:5px 10px;font-size:11.5px;font-weight:600;background:#fff;border:1px solid var(--border);
@@ -203,6 +204,14 @@
   .copy-btn.copied{background:var(--green-bg-soft);border-color:var(--green);color:var(--green-ink)}
   .copy-btn.failed{background:var(--red-bg-soft);border-color:var(--red);color:var(--red-ink)}
   .chart-wrap{position:relative;height:340px}
+
+  /* ---------- Blocos com botão copiar ---------- */
+  .block-with-copy{position:relative}
+  .block-with-copy .block-head{
+    display:flex;justify-content:space-between;align-items:center;
+    gap:12px;flex-wrap:wrap;margin-bottom:12px;
+  }
+  .block-with-copy .block-head h2{margin:0}
 
   /* ---------- TABELAS ---------- */
   .tables-stack{display:flex;flex-direction:column;gap:18px}
@@ -246,14 +255,34 @@
   .data-table td.consol-col.cell-green{background:var(--green-bg-soft) !important;border-left:2px solid #67e8f9}
   .data-table td.consol-col.cell-yellow{background:var(--yellow-bg-soft) !important;border-left:2px solid #67e8f9}
   .data-table td.consol-col.cell-red{background:var(--red-bg-soft) !important;border-left:2px solid #67e8f9}
-  .data-table tr.highlight-row td:first-child::before{ content:'⭐ '; color:var(--gold); }
-  .data-table tr.highlight-row td:first-child{ color:var(--gold-ink); font-weight:800; }
+
+  /* Linha destacada: mantém cor do farol + contorno roxo + pin */
+  .data-table tr.highlight-row td:first-child{
+    position:sticky;
+    color:var(--purple-ink);
+    font-weight:800;
+    padding-left:26px;
+  }
+  .data-table tr.highlight-row td:first-child::before{
+    content:'';
+    position:absolute;
+    left:6px; top:50%; transform:translateY(-50%);
+    width:16px; height:16px;
+    background:url('image/pin.png') center/contain no-repeat;
+  }
+  .data-table tr.highlight-row td{
+    box-shadow:inset 0 0 0 1.5px var(--purple);
+  }
+  .data-table tr.highlight-row td:first-child{
+    box-shadow:inset 0 0 0 1.5px var(--purple), 1px 0 0 var(--border);
+  }
 
   .delta-up{color:var(--green);font-weight:600}
   .delta-down{color:var(--red);font-weight:600}
   .delta-flat{color:var(--muted)}
 
   .capturing th,.capturing td{position:static !important;box-shadow:none !important}
+  .capturing.highlight-row td{box-shadow:none !important}
 
   .resumo-head{
     display:flex; flex-wrap:wrap; align-items:center; gap:14px;
@@ -270,6 +299,7 @@
   .resumo-subtitle{
     font-size:13px;font-weight:700;color:#334155;margin:22px 0 10px;
     padding-bottom:6px;border-bottom:2px solid var(--border);
+    display:flex;align-items:center;gap:8px;
   }
   .resumo-subtitle:first-child{ margin-top:0; }
 
@@ -314,8 +344,8 @@
   .modal-metric-row .name{ flex:1; color:#334155; }
   .modal-metric-row label{ display:flex; align-items:center; gap:5px; cursor:pointer; user-select:none; white-space:nowrap; }
   .modal-metric-row input[type=checkbox]{ accent-color:var(--accent); width:14px; height:14px; }
-  .modal-metric-row .destacar-cb{ accent-color:var(--gold); }
-  .modal-metric-row .destacar-label{ color:var(--gold-ink); font-weight:600; }
+  .modal-metric-row .destacar-cb{ accent-color:var(--purple); }
+  .modal-metric-row .destacar-label{ color:var(--purple-ink); font-weight:600; }
   .modal-metric-row .analisar-label{ color:#334155; }
   .modal-actions{
     padding:14px 22px; border-top:1px solid var(--border);
@@ -364,9 +394,9 @@
 
   <header class="hero">
     <h1>📊 Painel Consolidado — Super BI · Conviva · Planejamento de Aula</h1>
-    <p>Carregamento automático a partir dos três CSVs consolidados. Destaque para <strong>Nota Final</strong>
-       e <strong>Tarefa SP</strong>. Use o botão <strong>⚙️ Editar índices</strong> para escolher o que
-       analisar e destacar — as preferências ficam salvas no navegador.</p>
+    <p>Carregamento automático a partir dos três CSVs consolidados. Índices marcados recebem um
+       <strong>pin roxo</strong> de destaque. Use <strong>⚙️ Editar índices</strong> para escolher
+       o que analisar e o que destacar — preferências salvas no navegador.</p>
   </header>
 
   <div class="global-bar">
@@ -395,7 +425,7 @@
     <div class="modal-head">
       <h3>⚙️ Editar índices</h3>
       <p>Escolha o que <strong>analisar</strong> (aparece na aba Resumo) e o que <strong>destacar</strong>
-         (aparece com ⭐ nos painéis). As preferências ficam salvas no navegador.</p>
+         (recebe o pin roxo nos painéis). As preferências ficam salvas no navegador.</p>
     </div>
     <div class="modal-body" id="modalBody"></div>
     <div class="modal-actions">
@@ -429,7 +459,7 @@ const PALETTE = ['#2563eb','#dc2626','#16a34a','#f59e0b','#7c3aed','#0891b2',
                  '#db2777','#65a30d','#ea580c','#4f46e5','#0d9488','#b45309',
                  '#9333ea','#475569','#e11d48','#0ea5e9'];
 const CONSOLIDADO_COLOR = '#0f172a';
-const GOLD_COLOR = '#f59e0b';
+const PURPLE_COLOR = '#7c3aed';
 
 const CSV_SOURCES = {
   superbi: ['excel/super_bi.csv', 'super_bi.csv', './excel/super_bi.csv'],
@@ -438,9 +468,9 @@ const CSV_SOURCES = {
 };
 
 /* =========================================================
-   PREFERÊNCIAS (localStorage)
+   PREFERÊNCIAS
    ========================================================= */
-const PREFS_KEY = 'painel_prefs_v1';
+const PREFS_KEY = 'painel_prefs_v2';
 const DEFAULT_HIGHLIGHTS = {
   superbi: ['Nota Final', 'Tarefa SP'],
   conviva: [],
@@ -463,7 +493,6 @@ function loadPrefs(){
 function savePrefs(){
   try { localStorage.setItem(PREFS_KEY, JSON.stringify(PREFS)); } catch(e){}
 }
-
 const PREFS = loadPrefs();
 
 function isHighlighted(moduleKey, metricKey){
@@ -471,7 +500,6 @@ function isHighlighted(moduleKey, metricKey){
 }
 function getResumoMetricsFor(moduleKey){
   if (!PREFS.resumoMetrics) {
-    // Default: todas as métricas
     return MODULES[moduleKey].metrics.map(m => m.key);
   }
   return PREFS.resumoMetrics[moduleKey] || [];
@@ -762,6 +790,7 @@ function buildModulePanel(m){
       </div>
       <div class="period-list" id="periodList-${m.key}"></div>
     </section>
+
     <section class="card hidden" id="controls-${m.key}">
       <h2>⚙️ Configurações</h2>
       <div class="controls-grid">
@@ -802,29 +831,42 @@ function buildModulePanel(m){
     <section class="card hidden" id="kpi-${m.key}">
       <div class="card-head-row">
         <h2>📊 Médias do período — <span class="muted" id="kpiEntityLabel-${m.key}"></span></h2>
-        <button class="btn btn-edit" data-edit-modal="${m.key}">⚙️ Editar índices</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-edit" data-edit-modal="${m.key}">⚙️ Editar índices</button>
+          <button class="copy-btn" type="button" data-copy-block="kpiCapture-${m.key}" data-html2canvas-ignore="true">📋 Copiar imagem</button>
+        </div>
       </div>
-      <div class="kpis" id="kpis-${m.key}"></div>
+      <div id="kpiCapture-${m.key}">
+        <div class="kpis" id="kpis-${m.key}"></div>
+      </div>
     </section>
 
     <section class="card hidden" id="avanco-${m.key}">
-      <h2>📈 Avanço da primeira à última semana — <span class="muted" id="avancoEntityLabel-${m.key}"></span></h2>
-      <div class="kpis" id="avancoList-${m.key}"></div>
+      <div class="card-head-row">
+        <h2>📈 Avanço da primeira à última semana — <span class="muted" id="avancoEntityLabel-${m.key}"></span></h2>
+        <button class="copy-btn" type="button" data-copy-block="avancoCapture-${m.key}" data-html2canvas-ignore="true">📋 Copiar imagem</button>
+      </div>
+      <div id="avancoCapture-${m.key}">
+        <div class="kpis" id="avancoList-${m.key}"></div>
+      </div>
     </section>
 
     <section class="card hidden" id="charts-${m.key}">
       <h2>📊 Evolução por período</h2>
       <div class="charts-grid" id="chartsGrid-${m.key}"></div>
     </section>
+
     <section class="card hidden" id="tables-${m.key}">
       <h2>📋 Tabelas de resumo</h2>
       <div class="tables-stack">
         <div class="table-block" data-block="indexes-${m.key}">
           <div class="table-block-head">
             <h3>Tabela 1 — Evolução das métricas (entidade em foco)</h3>
-            <button class="copy-btn" type="button" data-copy="tableIndexes-${m.key}" data-html2canvas-ignore="true">📋 Copiar</button>
+            <button class="copy-btn" type="button" data-copy-block="tableBlockIndexes-${m.key}" data-html2canvas-ignore="true">📋 Copiar imagem</button>
           </div>
-          <div class="table-scroll"><table class="data-table" id="tableIndexes-${m.key}"></table></div>
+          <div id="tableBlockIndexes-${m.key}">
+            <div class="table-scroll"><table class="data-table" id="tableIndexes-${m.key}"></table></div>
+          </div>
         </div>
         <div class="table-block" data-block="schools-${m.key}">
           <div class="table-block-head">
@@ -832,10 +874,12 @@ function buildModulePanel(m){
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <span class="small muted">Métrica:</span>
               <select id="tableMetric-${m.key}" style="width:auto;min-width:220px;padding:5px 8px;font-size:12px"></select>
-              <button class="copy-btn" type="button" data-copy="tableSchools-${m.key}" data-html2canvas-ignore="true">📋 Copiar</button>
+              <button class="copy-btn" type="button" data-copy-block="tableBlockSchools-${m.key}" data-html2canvas-ignore="true">📋 Copiar imagem</button>
             </div>
           </div>
-          <div class="table-scroll"><table class="data-table" id="tableSchools-${m.key}"></table></div>
+          <div id="tableBlockSchools-${m.key}">
+            <div class="table-scroll"><table class="data-table" id="tableSchools-${m.key}"></table></div>
+          </div>
         </div>
       </div>
     </section>
@@ -1195,7 +1239,7 @@ function renderControls(m){
   document.getElementById(`metricPicker-${key}`).innerHTML = m.metrics.map(mt => `
     <label>
       <input type="checkbox" data-metric="${esc(mt.key)}" ${m.selectedMetrics.has(mt.key) ? 'checked' : ''}>
-      <span>${isHighlighted(key, mt.key) ? '⭐ ' : ''}${esc(mt.label)}</span>
+      <span>${esc(mt.label)}</span>
     </label>`).join('');
 
   document.getElementById(`onlyCommon-${key}`).checked = m.onlyCommon;
@@ -1270,7 +1314,7 @@ for (const key of Object.keys(MODULES)){
 }
 
 /* =========================================================
-   PAINEL 1 — MÉDIAS DO PERÍODO (com destaque)
+   PAINEL 1 — MÉDIAS DO PERÍODO
    ========================================================= */
 function renderKPIs(m){
   const ent = m.focusEntity;
@@ -1286,7 +1330,6 @@ function renderKPIs(m){
     return;
   }
 
-  // Ordena: destacados primeiro, depois os demais
   const sorted = [...metrics].sort((a, b) => {
     const ha = isHighlighted(m.key, a.key) ? 0 : 1;
     const hb = isHighlighted(m.key, b.key) ? 0 : 1;
@@ -1298,19 +1341,18 @@ function renderKPIs(m){
     const valid  = values.filter(v => typeof v === 'number' && isFinite(v));
     const media  = valid.length ? valid.reduce((a,b) => a+b, 0) / valid.length : null;
     const semColor = m.cfg.cellClass(mt, media);
-    const nSemanas = valid.length;
     const hl = isHighlighted(m.key, mt.key);
 
     return `<div class="kpi ${semColor}${hl ? ' highlight' : ''}">
       <div class="kpi-label" title="${esc(mt.label)}">${esc(mt.label)}</div>
       <div class="kpi-value">${m.cfg.formatValue(mt, media)}</div>
-      <div class="kpi-sub">média de ${nSemanas} semana${nSemanas === 1 ? '' : 's'}</div>
+      <div class="kpi-sub">média de ${valid.length} semana${valid.length === 1 ? '' : 's'}</div>
     </div>`;
   }).join('');
 }
 
 /* =========================================================
-   PAINEL 2 — AVANÇO (com destaque)
+   PAINEL 2 — AVANÇO
    ========================================================= */
 function renderAvanco(m){
   const ent = m.focusEntity;
@@ -1370,70 +1412,6 @@ function renderAvanco(m){
 /* =========================================================
    GRÁFICOS
    ========================================================= */
-function buildChart(card, m, metric, entity, isHighlightedChart){
-  const color = isHighlightedChart ? GOLD_COLOR : PALETTE[0];
-  const shortLabels = m.datasets.map(d => d.short || d.label);
-  const fullLabels  = m.datasets.map(d => d.label);
-  const nWeeks = shortLabels.length;
-  const tickFont = nWeeks > 20 ? 9 : (nWeeks > 12 ? 10 : 11);
-  const rotate   = nWeeks > 14 ? 45 : 0;
-  const labelSize = nWeeks > 20 ? 9 : 10;
-
-  return new Chart(card.querySelector('canvas'), {
-    type: 'line',
-    data: {
-      labels: shortLabels,
-      datasets: [{
-        label: entityLabelOf(m, entity),
-        data: m.datasets.map(d => getValue(m, d, entity, metric.key)),
-        borderColor: color, backgroundColor: color,
-        pointBackgroundColor: color, pointBorderColor: '#fff', pointBorderWidth: 1.5,
-        borderWidth: isHighlightedChart ? 3.5 : 2.5,
-        tension: 0.3, spanGaps: true,
-        pointRadius: nWeeks > 20 ? 3 : 5,
-        pointHoverRadius: 7,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      animation: { duration: 400 },
-      layout: { padding: { top: 34, right: 14, left: 6, bottom: 4 } },
-      interaction: { mode:'index', intersect:false },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            title: items => items.length ? fullLabels[items[0].dataIndex] : '',
-            label: c => `${c.dataset.label}: ${m.cfg.formatValue(metric, c.parsed.y)}`
-          }
-        },
-        datalabels: {
-          display: ctx => {
-            if (!m.showDataLabels) return false;
-            const v = ctx.dataset.data[ctx.dataIndex];
-            return v != null && isFinite(v);
-          },
-          align: 'top', anchor: 'end', offset: 6, clamp: true, clip: false,
-          color: '#fff',
-          backgroundColor: ctx => ctx.dataset.borderColor,
-          borderColor: '#fff', borderWidth: 1.5, borderRadius: 6,
-          padding: { top: 2, bottom: 2, left: 5, right: 5 },
-          font: { size: labelSize, weight: '700' },
-          formatter: v => m.cfg.formatValue(metric, v)
-        }
-      },
-      scales: {
-        x: { grid: { display: false },
-             ticks: { autoSkip: false, maxRotation: rotate, minRotation: rotate,
-                      font: { size: tickFont, weight: '600' }, color: '#334155', padding: 4,
-                      callback: function(val, index){ return shortLabels[index] ?? val; } } },
-        y: { grace: '16%', grid: { color: '#eef2f7' },
-             ticks: { font: { size: 10 }, callback: v => m.cfg.formatValue(metric, v) } }
-      }
-    }
-  });
-}
-
 function renderCharts(m){
   m.charts.forEach(c => { try { c.destroy(); } catch(e){} });
   m.charts = [];
@@ -1445,109 +1423,98 @@ function renderCharts(m){
   if (!metrics.length){ grid.innerHTML = '<p class="muted small">Selecione ao menos uma métrica.</p>'; return; }
   if (!entities.length){ grid.innerHTML = '<p class="muted small">Nenhuma entidade selecionada.</p>'; return; }
 
-  // Ordena: destacados primeiro
   const sortedMetrics = [...metrics].sort((a, b) => {
     const ha = isHighlighted(m.key, a.key) ? 0 : 1;
     const hb = isHighlighted(m.key, b.key) ? 0 : 1;
     return ha - hb;
   });
 
+  const shortLabels = m.datasets.map(d => d.short || d.label);
+  const fullLabels  = m.datasets.map(d => d.label);
+  const nWeeks = shortLabels.length;
+  const tickFont = nWeeks > 20 ? 9 : (nWeeks > 12 ? 10 : 11);
+  const rotate   = nWeeks > 14 ? 45 : 0;
+  const labelSize = nWeeks > 20 ? 9 : 10;
+
   sortedMetrics.forEach((metric, mi) => {
     const card = document.createElement('div');
-    card.className = 'chart-card';
     const hl = isHighlighted(m.key, metric.key);
-    if (hl) card.classList.add('highlight-chart');
-
+    card.className = 'chart-card' + (hl ? ' highlight-chart' : '');
     card.innerHTML = `
       <div class="chart-head">
-        <h3 title="${esc(metric.label)}">${hl ? '⭐ ' : ''}${esc(metric.label)}</h3>
-        <button class="copy-btn" type="button" data-html2canvas-ignore="true">📋 Copiar</button>
+        <h3 title="${esc(metric.label)}">${esc(metric.label)}</h3>
+        <button class="copy-btn" type="button" data-html2canvas-ignore="true">📋 Copiar imagem</button>
       </div>
       <div class="chart-wrap"><canvas></canvas></div>`;
     grid.appendChild(card);
 
-    const multiEntity = entities.length > 1;
-    if (multiEntity){
-      // Multi-entidades: usa paleta normal, destaca só com borda mais forte se for highlight
-      const shortLabels = m.datasets.map(d => d.short || d.label);
-      const fullLabels = m.datasets.map(d => d.label);
-      const nWeeks = shortLabels.length;
+    let normalIdx = 0;
+    const datasets = entities.map(ent => {
+      const isConsol = ent === '__CONSOLIDADO__';
+      let color;
+      if (isConsol) color = CONSOLIDADO_COLOR;
+      else if (hl && normalIdx === 0) color = PURPLE_COLOR;
+      else color = PALETTE[(normalIdx + mi) % PALETTE.length];
+      normalIdx++;
+      return {
+        label: entityLabelOf(m, ent),
+        data: m.datasets.map(d => getValue(m, d, ent, metric.key)),
+        borderColor: color, backgroundColor: color,
+        pointBackgroundColor: color, pointBorderColor: '#fff', pointBorderWidth: 1.5,
+        borderWidth: isConsol ? 3.5 : (hl && color === PURPLE_COLOR ? 3.5 : 2.5),
+        borderDash: isConsol ? [7,4] : undefined,
+        tension: 0.3, spanGaps: true,
+        pointRadius: isConsol ? (nWeeks > 20 ? 4 : 5) : (nWeeks > 20 ? 3 : (nWeeks > 12 ? 4 : 5)),
+        pointHoverRadius: 7
+      };
+    });
 
-      let normalIdx = 0;
-      const datasets = entities.map(ent => {
-        const isConsol = ent === '__CONSOLIDADO__';
-        let color;
-        if (isConsol) color = CONSOLIDADO_COLOR;
-        else if (hl && normalIdx === 0) color = GOLD_COLOR;
-        else { color = PALETTE[(normalIdx + mi) % PALETTE.length]; }
-        normalIdx++;
-        return {
-          label: entityLabelOf(m, ent),
-          data: m.datasets.map(d => getValue(m, d, ent, metric.key)),
-          borderColor: color, backgroundColor: color,
-          pointBackgroundColor: color, pointBorderColor: '#fff', pointBorderWidth: 1.5,
-          borderWidth: isConsol ? 3.5 : 2.5,
-          borderDash: isConsol ? [7,4] : undefined,
-          tension: 0.3, spanGaps: true,
-          pointRadius: nWeeks > 20 ? 3 : (nWeeks > 12 ? 4 : 5),
-          pointHoverRadius: 7
-        };
-      });
-
-      const chart = new Chart(card.querySelector('canvas'), {
-        type: 'line',
-        data: { labels: shortLabels, datasets },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          animation: { duration: 400 },
-          layout: { padding: { top: 34, right: 14, left: 6, bottom: 4 } },
-          interaction: { mode:'index', intersect:false },
-          plugins: {
-            legend: { display: true, position: 'bottom',
-              labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle:'circle',
-                        font: { size: 10 }, padding: 10 } },
-            tooltip: {
-              callbacks: {
-                title: items => items.length ? fullLabels[items[0].dataIndex] : '',
-                label: c => `${c.dataset.label}: ${m.cfg.formatValue(metric, c.parsed.y)}`
-              }
-            },
-            datalabels: {
-              display: ctx => {
-                if (!m.showDataLabels) return false;
-                const v = ctx.dataset.data[ctx.dataIndex];
-                return v != null && isFinite(v);
-              },
-              align: 'top', anchor: 'end', offset: 6, clamp: true, clip: false,
-              color: '#fff',
-              backgroundColor: ctx => ctx.dataset.borderColor,
-              borderColor: '#fff', borderWidth: 1.5, borderRadius: 6,
-              padding: { top: 2, bottom: 2, left: 5, right: 5 },
-              font: { size: nWeeks > 20 ? 9 : 10, weight: '700' },
-              formatter: v => m.cfg.formatValue(metric, v)
+    const chart = new Chart(card.querySelector('canvas'), {
+      type: 'line',
+      data: { labels: shortLabels, datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 400 },
+        layout: { padding: { top: 34, right: 14, left: 6, bottom: 4 } },
+        interaction: { mode:'index', intersect:false },
+        plugins: {
+          legend: { display: entities.length > 1, position: 'bottom',
+            labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle:'circle',
+                      font: { size: 10 }, padding: 10 } },
+          tooltip: {
+            callbacks: {
+              title: items => items.length ? fullLabels[items[0].dataIndex] : '',
+              label: c => `${c.dataset.label}: ${m.cfg.formatValue(metric, c.parsed.y)}`
             }
           },
-          scales: {
-            x: { grid: { display: false },
-                 ticks: { autoSkip: false, maxRotation: nWeeks > 14 ? 45 : 0,
-                          font: { size: nWeeks > 20 ? 9 : 11, weight: '600' },
-                          color: '#334155', padding: 4,
-                          callback: function(val, index){ return shortLabels[index] ?? val; } } },
-            y: { grace: '16%', grid: { color: '#eef2f7' },
-                 ticks: { font: { size: 10 }, callback: v => m.cfg.formatValue(metric, v) } }
+          datalabels: {
+            display: ctx => {
+              if (!m.showDataLabels) return false;
+              const v = ctx.dataset.data[ctx.dataIndex];
+              return v != null && isFinite(v);
+            },
+            align: 'top', anchor: 'end', offset: 6, clamp: true, clip: false,
+            color: '#fff',
+            backgroundColor: ctx => ctx.dataset.borderColor,
+            borderColor: '#fff', borderWidth: 1.5, borderRadius: 6,
+            padding: { top: 2, bottom: 2, left: 5, right: 5 },
+            font: { size: labelSize, weight: '700' },
+            formatter: v => m.cfg.formatValue(metric, v)
           }
+        },
+        scales: {
+          x: { grid: { display: false },
+               ticks: { autoSkip: false, maxRotation: rotate, minRotation: rotate,
+                        font: { size: tickFont, weight: '600' }, color: '#334155', padding: 4,
+                        callback: function(val, index){ return shortLabels[index] ?? val; } } },
+          y: { grace: '16%', grid: { color: '#eef2f7' },
+               ticks: { font: { size: 10 }, callback: v => m.cfg.formatValue(metric, v) } }
         }
-      });
-      const btn = card.querySelector('.copy-btn');
-      btn.addEventListener('click', () => copyChartAsImage(card, chart, btn));
-      m.charts.push(chart);
-    } else {
-      // Uma entidade: usa buildChart que já lida com highlight
-      const chart = buildChart(card, m, metric, entities[0], hl);
-      const btn = card.querySelector('.copy-btn');
-      btn.addEventListener('click', () => copyChartAsImage(card, chart, btn));
-      m.charts.push(chart);
-    }
+      }
+    });
+    const btn = card.querySelector('.copy-btn');
+    btn.addEventListener('click', () => copyBlockAsImage(card, btn));
+    m.charts.push(chart);
   });
 }
 
@@ -1608,7 +1575,7 @@ function renderTables(m){
   /* Tabela 2 */
   const sel = document.getElementById(`tableMetric-${m.key}`);
   sel.innerHTML = m.metrics.map(mt =>
-    `<option value="${esc(mt.key)}" ${mt.key === m.tableMetric ? 'selected' : ''}>${isHighlighted(m.key, mt.key) ? '⭐ ' : ''}${esc(mt.label)}</option>`).join('');
+    `<option value="${esc(mt.key)}" ${mt.key === m.tableMetric ? 'selected' : ''}>${esc(mt.label)}</option>`).join('');
 
   const mk = m.tableMetric;
   const metric = m.metrics.find(mt => mt.key === mk) || { key: mk, label: mk, isPercent: false };
@@ -1667,45 +1634,34 @@ function renderTables(m){
 }
 
 /* =========================================================
-   COPIAR
+   COPIAR IMAGEM (genérico — blocos, gráficos, tabelas)
    ========================================================= */
-async function copyChartAsImage(card, chart, btn){
-  if (!window.html2canvas){ btn.textContent = '❌ html2canvas';
-    setTimeout(() => btn.textContent = '📋 Copiar', 1500); return; }
-  const original = btn.textContent;
-  const prevBg = card.style.background, prevPad = card.style.padding;
-  card.style.background = '#ffffff'; card.style.padding = '16px';
-  btn.style.visibility = 'hidden';
-  try {
-    const canvas = await html2canvas(card, { backgroundColor:'#fff', scale:2, logging:false, useCORS:true });
-    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-    if (!navigator.clipboard || !window.ClipboardItem) throw new Error('Clipboard indisponível');
-    await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
-    btn.textContent = '✅ Copiado!'; btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1600);
-  } catch(e){
-    console.error(e);
-    btn.textContent = '❌ Falhou'; btn.classList.add('failed');
-    setTimeout(() => { btn.textContent = original; btn.classList.remove('failed'); }, 1800);
-  } finally {
-    btn.style.visibility = ''; card.style.background = prevBg; card.style.padding = prevPad;
+async function copyBlockAsImage(block, btn){
+  if (!window.html2canvas){
+    btn.textContent = '❌ html2canvas';
+    setTimeout(() => btn.textContent = '📋 Copiar imagem', 1500);
+    return;
   }
-}
-
-async function copyTableAsImage(block, btn){
-  if (!window.html2canvas){ btn.textContent = '❌ html2canvas';
-    setTimeout(() => btn.textContent = '📋 Copiar', 1500); return; }
   const original = btn.textContent;
+
+  // Desbloqueia tabelas com scroll
   const scroll = block.querySelector('.table-scroll');
   const prevMaxH = scroll ? scroll.style.maxHeight : '';
   const prevOver = scroll ? scroll.style.overflow : '';
   const prevH    = scroll ? scroll.style.height : '';
   if (scroll){ scroll.style.maxHeight = 'none'; scroll.style.overflow = 'visible'; scroll.style.height = 'auto'; }
   block.classList.add('capturing');
+
   const prevBg = block.style.background, prevPad = block.style.padding, prevRad = block.style.borderRadius;
-  block.style.background = '#fff'; block.style.padding = '14px'; block.style.borderRadius = '12px';
+  const prevMinW = block.style.minWidth;
+  block.style.background = '#ffffff';
+  block.style.padding = '14px';
+  block.style.borderRadius = '12px';
+
   try {
-    const canvas = await html2canvas(block, { backgroundColor:'#fff', scale:2, logging:false, useCORS:true });
+    const canvas = await html2canvas(block, {
+      backgroundColor:'#fff', scale:2, logging:false, useCORS:true, allowTaint:true,
+    });
     const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
     if (!navigator.clipboard || !window.ClipboardItem) throw new Error('Clipboard indisponível');
     await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
@@ -1719,15 +1675,17 @@ async function copyTableAsImage(block, btn){
     if (scroll){ scroll.style.maxHeight = prevMaxH; scroll.style.overflow = prevOver; scroll.style.height = prevH; }
     block.classList.remove('capturing');
     block.style.background = prevBg; block.style.padding = prevPad; block.style.borderRadius = prevRad;
+    block.style.minWidth = prevMinW;
   }
 }
 
-document.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const table = document.getElementById(btn.dataset.copy); if (!table) return;
-    const block = table.closest('.table-block'); if (!block) return;
-    copyTableAsImage(block, btn);
-  });
+// Delegação global para todos os botões com data-copy-block
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-copy-block]');
+  if (!btn) return;
+  const block = document.getElementById(btn.dataset.copyBlock);
+  if (!block) return;
+  copyBlockAsImage(block, btn);
 });
 
 /* =========================================================
@@ -1735,11 +1693,9 @@ document.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
    ========================================================= */
 const modal = document.getElementById('editModal');
 const modalBody = document.getElementById('modalBody');
-// Estado temporário enquanto o modal está aberto
 let modalTemp = null;
 
 function openEditModal(){
-  // Snapshot do estado atual
   modalTemp = {
     highlights: JSON.parse(JSON.stringify(PREFS.highlights || {})),
     resumoMetrics: PREFS.resumoMetrics
@@ -1749,7 +1705,6 @@ function openEditModal(){
   buildModalBody();
   modal.classList.add('open');
 }
-
 function closeEditModal(){
   modal.classList.remove('open');
   modalTemp = null;
@@ -1784,7 +1739,7 @@ function buildModalBody(){
           </label>
           <label class="destacar-label">
             <input type="checkbox" class="destacar-cb" ${hlOn ? 'checked' : ''}>
-            ⭐ Destacar
+            📌 Destacar
           </label>
         </div>`;
       }
@@ -1796,7 +1751,6 @@ function buildModalBody(){
   modalBody.innerHTML = html;
 }
 
-// Delegação de eventos no modal
 modalBody.addEventListener('change', e => {
   const row = e.target.closest('.modal-metric-row'); if (!row) return;
   const key = row.dataset.key;
@@ -1813,7 +1767,6 @@ modalBody.addEventListener('change', e => {
   }
 
   if (e.target.classList.contains('analisar-cb')){
-    // Garante que o mapa existe
     if (modalTemp.resumoMetrics === null){
       modalTemp.resumoMetrics = {};
       for (const k of ['superbi','conviva','atpl']){
@@ -1837,18 +1790,15 @@ document.getElementById('modalSave').addEventListener('click', () => {
   savePrefs();
   closeEditModal();
 
-  // Re-renderiza tudo
   for (const m of Object.values(MODULES)) renderModule(m);
   if (document.querySelector('#tabsNav button.active')?.dataset.tab === 'resumo') renderResumo();
 });
 
-// Abrir modal a partir de botões
 document.addEventListener('click', e => {
   const btn = e.target.closest('[data-edit-modal]');
   if (btn){ openEditModal(); }
 });
 
-// Fechar ao clicar fora ou ESC
 modal.addEventListener('click', e => {
   if (e.target === modal) closeEditModal();
 });
@@ -1857,10 +1807,8 @@ document.addEventListener('keydown', e => {
 });
 
 /* =========================================================
-   RESUMO DA ESCOLA — agora com gráficos
+   RESUMO DA ESCOLA — apenas as médias (cards)
    ========================================================= */
-let resumoCharts = [];
-
 function renderResumo(){
   const panel = document.getElementById('panel-resumo');
   const anyData = Object.values(MODULES).some(m => m.datasets.length > 0);
@@ -1887,16 +1835,18 @@ function renderResumo(){
         ${[...allSchools].sort().map(n =>
           `<option value="${esc(n)}" ${current===n?'selected':''}>${esc(n)}</option>`).join('')}
       </select>
-      <span class="muted small" style="flex:1">Consolidado de todas as abas em gráficos e tabelas.</span>
+      <span class="muted small" style="flex:1">Médias dos índices selecionados para esta escola.</span>
       <button class="btn btn-edit" data-edit-modal="resumo">⚙️ Editar índices</button>
-    </div>
-
-    <div class="card" id="resumoChartsCard">
-      <h2>📊 Evolução dos índices selecionados</h2>
-      <div id="resumoCharts"></div>
     </div>
   `;
 
+  // Bloco de médias
+  html += `<div class="card">
+    <h2>📊 Médias dos índices — <span class="muted" id="resumoEntityLabel">${esc(entityLabelOf({onlyCommon:false}, current))}</span></h2>
+    <div id="resumoAverages"></div>
+  </div>`;
+
+  // Tabelas detalhadas por módulo
   for (const key of ['superbi','conviva','atpl']){
     const m = MODULES[key];
     if (!m.datasets.length) continue;
@@ -1910,27 +1860,12 @@ function renderResumo(){
     renderResumo();
   });
 
-  panel.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const table = document.getElementById(btn.dataset.copy); if (!table) return;
-      const block = table.closest('.table-block'); if (!block) return;
-      copyTableAsImage(block, btn);
-    });
-  });
-
-  renderResumoCharts();
+  renderResumoAverages(current);
 }
 
-function renderResumoCharts(){
-  // Destrói gráficos anteriores
-  resumoCharts.forEach(c => { try { c.destroy(); } catch(e){} });
-  resumoCharts = [];
-
-  const panel = document.getElementById('panel-resumo');
-  const container = document.getElementById('resumoCharts');
+function renderResumoAverages(entity){
+  const container = document.getElementById('resumoAverages');
   if (!container) return;
-
-  const entity = panel.dataset.school || '__MEDIA__';
 
   let anyRendered = false;
   let html = '';
@@ -1945,26 +1880,33 @@ function renderResumoCharts(){
 
     anyRendered = true;
 
-    // Ordena: destacados primeiro
     const sorted = [...metrics].sort((a, b) => {
       const ha = isHighlighted(key, a.key) ? 0 : 1;
       const hb = isHighlighted(key, b.key) ? 0 : 1;
       return ha - hb;
     });
 
-    html += `<div class="resumo-subtitle">${m.cfg.icon} ${esc(m.cfg.title)}</div>`;
-    html += `<div class="charts-grid">`;
-    sorted.forEach((metric, mi) => {
-      const hl = isHighlighted(key, metric.key);
-      html += `<div class="chart-card${hl ? ' highlight-chart' : ''}" data-chart-key="${key}" data-chart-metric="${esc(metric.key)}">
-        <div class="chart-head">
-          <h3 title="${esc(metric.label)}">${hl ? '⭐ ' : ''}${esc(metric.label)}</h3>
-          <button class="copy-btn" type="button" data-html2canvas-ignore="true">📋 Copiar</button>
-        </div>
-        <div class="chart-wrap"><canvas></canvas></div>
+    html += `<div class="resumo-subtitle">${m.cfg.icon} ${esc(m.cfg.title)}
+      <button class="copy-btn" type="button" data-copy-block="resumoKpi-${key}" data-html2canvas-ignore="true"
+              style="margin-left:auto">📋 Copiar imagem</button>
+    </div>`;
+    html += `<div id="resumoKpi-${key}" style="margin-bottom:18px"><div class="kpis">`;
+
+    for (const mt of sorted){
+      const values = m.datasets.map(d => getValue(m, d, entity, mt.key));
+      const valid  = values.filter(v => typeof v === 'number' && isFinite(v));
+      const media  = valid.length ? valid.reduce((a,b) => a+b, 0) / valid.length : null;
+      const semColor = m.cfg.cellClass(mt, media);
+      const hl = isHighlighted(key, mt.key);
+
+      html += `<div class="kpi ${semColor}${hl ? ' highlight' : ''}">
+        <div class="kpi-label" title="${esc(mt.label)}">${esc(mt.label)}</div>
+        <div class="kpi-value">${m.cfg.formatValue(mt, media)}</div>
+        <div class="kpi-sub">média de ${valid.length} semana${valid.length === 1 ? '' : 's'}</div>
       </div>`;
-    });
-    html += `</div>`;
+    }
+
+    html += `</div></div>`;
   }
 
   if (!anyRendered){
@@ -1978,25 +1920,10 @@ function renderResumoCharts(){
   }
 
   container.innerHTML = html;
-
-  // Cria cada gráfico individualmente
-  container.querySelectorAll('.chart-card').forEach(card => {
-    const key = card.dataset.chartKey;
-    const metricKey = card.dataset.chartMetric;
-    const m = MODULES[key];
-    const metric = m.metrics.find(mt => mt.key === metricKey);
-    if (!metric) return;
-    const hl = isHighlighted(key, metric.key);
-
-    const chart = buildChart(card, m, metric, entity, hl);
-    const btn = card.querySelector('.copy-btn');
-    if (btn) btn.addEventListener('click', () => copyChartAsImage(card, chart, btn));
-    resumoCharts.push(chart);
-  });
 }
 
 /* =========================================================
-   TABELAS DO RESUMO (com "Média das semanas")
+   TABELAS DO RESUMO
    ========================================================= */
 function buildResumoTable(m, entity){
   const cfg = m.cfg;
@@ -2044,18 +1971,20 @@ function buildResumoTable(m, entity){
     </tr>`;
   });
 
-  const tableId = `resumo-table-${m.key}`;
+  const blockId = `resumo-table-block-${m.key}`;
   return `
     <div class="table-block" data-block="resumo-${m.key}" style="margin-bottom:18px">
       <div class="table-block-head">
         <h3>${cfg.icon} ${esc(cfg.title)} — ${esc(cfg.label)}</h3>
-        <button class="copy-btn" type="button" data-copy="${tableId}" data-html2canvas-ignore="true">📋 Copiar</button>
+        <button class="copy-btn" type="button" data-copy-block="${blockId}" data-html2canvas-ignore="true">📋 Copiar imagem</button>
       </div>
-      <div class="table-scroll">
-        <table class="data-table" id="${tableId}">
-          ${head}
-          <tbody>${body}</tbody>
-        </table>
+      <div id="${blockId}">
+        <div class="table-scroll">
+          <table class="data-table">
+            ${head}
+            <tbody>${body}</tbody>
+          </table>
+        </div>
       </div>
     </div>`;
 }
