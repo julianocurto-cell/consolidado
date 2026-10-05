@@ -1,1 +1,1866 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel Consolidado — Super BI · Conviva · Planejamento de Aula</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  :root{
+    --bg:#eef2f7; --card:#fff; --border:#dde4ee; --text:#0f172a; --muted:#64748b;
+    --accent:#2563eb; --accent-soft:#e0ebff;
+    --green:#16a34a; --green-bg:#86efac; --green-bg-soft:#bbf7d0; --green-ink:#14532d;
+    --yellow:#ca8a04; --yellow-bg:#fde047; --yellow-bg-soft:#fef08a; --yellow-ink:#713f12;
+    --red:#dc2626; --red-bg:#fca5a5; --red-bg-soft:#fecaca; --red-ink:#7f1d1d;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(15,23,42,.06), 0 10px 28px -18px rgba(15,23,42,.35);
+  }
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  .wrap{max-width:1440px;margin:0 auto;padding:22px 20px 70px}
 
+  .hero{margin-bottom:16px}
+  .hero h1{margin:0 0 4px;font-size:22px;letter-spacing:-.02em}
+  .hero p{margin:0;color:var(--muted);max-width:920px;font-size:13px}
+
+  .global-bar{
+    display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+    background:#0f172a; color:#e2e8f0;
+    border-radius:12px; padding:10px 14px; margin-bottom:14px;
+  }
+  .global-bar .title{ font-weight:700; font-size:13px; margin-right:auto; }
+  .global-bar button{
+    border:1px solid #334155; background:#1e293b; color:#e2e8f0;
+    border-radius:9px; padding:7px 13px; font-size:13px; cursor:pointer;
+    font-family:inherit; font-weight:600; transition:.15s;
+  }
+  .global-bar button:hover{ background:#334155; }
+  .global-bar button.primary{ background:#0d9488; border-color:#0d9488; color:#fff; }
+  .global-bar button.primary:hover{ background:#0f766e; }
+  .global-bar .load-info{ font-size:12px; color:#94a3b8; }
+
+  .tabs{
+    display:flex; gap:6px; flex-wrap:wrap;
+    background:#fff; border:1px solid var(--border); border-radius:12px;
+    padding:6px; margin-bottom:16px; box-shadow:var(--shadow);
+  }
+  .tabs button{
+    flex:1; min-width:150px;
+    background:transparent; border:1px solid transparent;
+    border-radius:8px; padding:9px 12px; font-size:13px; font-weight:600;
+    color:#334155; cursor:pointer; font-family:inherit; transition:.15s;
+    white-space:nowrap;
+  }
+  .tabs button:hover{ background:#eef2f8; }
+  .tabs button.active{
+    background:#fff; border-color:var(--accent); color:var(--accent);
+    box-shadow:0 1px 3px rgba(37,99,235,.15);
+  }
+  .tabs button .count{
+    background:var(--accent-soft); color:var(--accent);
+    border-radius:999px; padding:1px 7px; font-size:10.5px; margin-left:6px;
+  }
+  .tabs button.active .count{ background:var(--accent); color:#fff; }
+
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+        box-shadow:var(--shadow);padding:16px 16px 18px;margin-bottom:16px}
+  .card h2{margin:0 0 12px;font-size:14.5px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+  .card h2 .badge{background:var(--accent-soft);color:var(--accent);border-radius:999px;
+        padding:1px 9px;font-size:11px;font-weight:700}
+  .hidden{display:none !important}
+  .muted{color:var(--muted)}
+  .small{font-size:12px}
+
+  .drop{border:2px dashed #c3cede;border-radius:12px;background:#f8fafc;padding:22px 16px;
+        text-align:center;cursor:pointer;transition:.15s}
+  .drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+  .drop-icon{font-size:28px;line-height:1}
+  .drop p{margin:6px 0 4px;font-size:13px}
+  .drop code{background:#e8eef7;border-radius:4px;padding:1px 5px;font-size:12px}
+
+  .periods-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .period-list{display:flex;flex-direction:column;gap:6px}
+  .period-item{display:flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid var(--border);
+        border-radius:9px;padding:6px 9px}
+  .period-idx{width:22px;height:22px;flex:none;border-radius:50%;background:var(--accent);color:#fff;
+        font-size:10px;font-weight:700;display:grid;place-items:center}
+  .period-item input[type=text]{flex:1;min-width:120px;border:1px solid var(--border);border-radius:8px;
+        padding:5px 8px;font-size:12.5px;font-family:inherit;background:#fff}
+  .period-file{color:var(--muted);font-size:11px;max-width:260px;overflow:hidden;text-overflow:ellipsis;
+        white-space:nowrap;flex:none}
+  .tag-rel{background:#fef3c7;color:#92400e;border-radius:999px;font-size:10px;font-weight:700;
+        padding:2px 7px;flex:none}
+  .icon-btn{border:1px solid var(--border);background:#fff;border-radius:7px;width:26px;height:26px;
+        cursor:pointer;font-size:11px;color:var(--muted);display:grid;place-items:center;flex:none}
+  .icon-btn:hover{background:#eef2f8;color:var(--text)}
+
+  .btn{border:1px solid var(--border);background:#fff;border-radius:9px;padding:6px 12px;cursor:pointer;
+       font-size:12.5px;font-family:inherit;font-weight:500;color:var(--text);transition:.15s}
+  .btn:hover{background:#f1f5fb}
+  .btn.danger{color:var(--red);border-color:#f3c9c9}
+  .btn.danger:hover{background:#fee2e2}
+  .btn.btn-consol{background:#0f172a; color:#fff; border-color:#0f172a; font-weight:600;}
+  .btn.btn-consol:hover{ background:#1e293b; }
+  .btn.btn-consol.on{ background:#0d9488; border-color:#0d9488; }
+
+  .controls-grid{display:grid;grid-template-columns:minmax(240px,1.1fr) minmax(280px,2fr);gap:18px}
+  .ctrl-label{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+        color:var(--muted);margin-bottom:6px}
+
+  .mode-radios{
+    display:flex; gap:6px; flex-wrap:wrap;
+    background:#f8fafc; border:1px solid var(--border); border-radius:10px; padding:5px;
+  }
+  .mode-radios label{
+    flex:1; min-width:130px; display:flex; align-items:center; gap:6px;
+    font-size:12px; font-weight:600; color:#334155;
+    padding:7px 10px; border-radius:8px; cursor:pointer; transition:.15s;
+    border:1px solid transparent;
+  }
+  .mode-radios label:hover{ background:#eef2f8; }
+  .mode-radios input{ accent-color:var(--accent); flex:none; }
+  .mode-radios label.active{
+    background:#fff; border-color:var(--accent); color:var(--accent);
+    box-shadow:0 1px 3px rgba(37,99,235,.15);
+  }
+  .hint-single{
+    display:flex; align-items:flex-start; gap:8px;
+    background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af;
+    border-radius:10px; padding:8px 10px; font-size:11.5px; line-height:1.4;
+    margin-top:8px;
+  }
+  .hint-single .ico{ flex:none; font-size:13px; }
+
+  select{width:100%;border:1px solid var(--border);border-radius:9px;padding:7px 10px;font-family:inherit;
+        font-size:12.5px;background:#fff;color:var(--text)}
+  select:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+  .picker{max-height:180px;overflow:auto;border:1px solid var(--border);border-radius:10px;padding:7px 9px;
+        background:#fbfcfe;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:2px 12px}
+  .picker label{display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 0;cursor:pointer;
+        white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .picker input{accent-color:var(--accent);flex:none}
+  .picker .peso{color:var(--muted);font-size:10.5px}
+  .picker label.consolidado-opt{
+    background:#ecfeff; border:1px solid #a5f3fc; border-radius:6px; padding:3px 7px;
+    font-weight:700; color:#0e7490;
+  }
+  .picker label.consolidado-opt input{ accent-color:#0e7490; }
+  .picker-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .toggle{display:flex;align-items:center;gap:6px;font-size:12px;margin-top:8px;color:var(--muted);cursor:pointer}
+
+  .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+  .kpi{border:1px solid var(--border);border-radius:11px;padding:10px 12px;background:#fbfcfe;transition:.2s}
+  .kpi.cell-green{background:var(--green-bg-soft);border-color:var(--green-bg)}
+  .kpi.cell-yellow{background:var(--yellow-bg-soft);border-color:var(--yellow-bg)}
+  .kpi.cell-red{background:var(--red-bg-soft);border-color:var(--red-bg)}
+  .kpi-label{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;
+        text-overflow:ellipsis}
+  .kpi-value{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:2px 0 4px}
+  .kpi.cell-green .kpi-value{color:var(--green-ink)}
+  .kpi.cell-yellow .kpi-value{color:var(--yellow-ink)}
+  .kpi.cell-red .kpi-value{color:var(--red-ink)}
+  .kpi-delta{font-size:11.5px;font-weight:600}
+  .kpi-delta.up{color:var(--green)}
+  .kpi-delta.down{color:var(--red)}
+  .kpi-delta.flat{color:var(--muted)}
+  .kpi-sub{font-size:10.5px;color:var(--muted);margin-top:2px}
+
+  .charts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .chart-card{border:1px solid var(--border);border-radius:12px;padding:12px 12px 8px;background:#fff;
+        display:flex;flex-direction:column}
+  .chart-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+  .chart-head h3{margin:0;font-size:13px;font-weight:600;color:#334155}
+  .copy-btn{padding:5px 10px;font-size:11.5px;font-weight:600;background:#fff;border:1px solid var(--border);
+        border-radius:8px;color:var(--text);cursor:pointer;transition:.15s;white-space:nowrap;flex:none}
+  .copy-btn:hover{background:#f1f5fb;border-color:#c7d3e5}
+  .copy-btn.copied{background:var(--green-bg-soft);border-color:var(--green);color:var(--green-ink)}
+  .copy-btn.failed{background:var(--red-bg-soft);border-color:var(--red);color:var(--red-ink)}
+  .chart-wrap{position:relative;height:340px}
+
+  .tables-stack{display:flex;flex-direction:column;gap:18px}
+  .table-block{margin-bottom:0}
+  .table-block-head{display:flex;justify-content:space-between;align-items:center;
+        gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .table-block-head h3{margin:0;font-size:12.5px;font-weight:600;color:#334155}
+
+  .table-scroll{overflow:auto;max-height:520px;border:1px solid var(--border);border-radius:10px;background:#fff}
+  table.data-table{border-collapse:separate;border-spacing:0;width:100%;table-layout:auto;
+        font-size:11px;min-width:0}
+  .data-table th,.data-table td{padding:5px 8px;border-bottom:1px solid var(--border);
+        text-align:right;white-space:nowrap;vertical-align:middle;line-height:1.2}
+  .data-table th:first-child,.data-table td:first-child{
+    text-align:left;position:sticky;left:0;background:#fff;z-index:2;
+    box-shadow:1px 0 0 var(--border);white-space:normal;
+    min-width:150px;max-width:230px;line-height:1.2;
+  }
+  .data-table thead th{
+    position:sticky;top:0;background:#f6f8fc;z-index:3;
+    font-weight:700;color:var(--muted);text-transform:uppercase;
+    font-size:9.5px;letter-spacing:.03em;white-space:normal;padding:6px 7px;
+  }
+  .data-table thead th:first-child{z-index:4}
+  .data-table tbody tr:hover td{background:#f8fbff}
+  .data-table tbody tr:hover td:first-child{background:#f2f7ff}
+  .data-table tr.media-row td{background:#f0f6ff;font-weight:700}
+  .data-table tr.media-row td:first-child{background:#e9f2ff}
+  .data-table tr.consol-row td{background:#ecfeff;font-weight:700}
+  .data-table tr.consol-row td:first-child{background:#cffafe}
+  .data-table tr.selected-row td{background:#fef3c7 !important;box-shadow:inset 3px 0 0 #f59e0b}
+  .data-table tr.selected-row td:first-child{
+    background:#fde68a !important;
+    box-shadow:inset 3px 0 0 #f59e0b, 1px 0 0 var(--border);
+  }
+  .data-table td.cell-green{background:var(--green-bg-soft) !important;color:var(--green-ink) !important;font-weight:800}
+  .data-table td.cell-yellow{background:var(--yellow-bg-soft) !important;color:var(--yellow-ink) !important;font-weight:800}
+  .data-table td.cell-red{background:var(--red-bg-soft) !important;color:var(--red-ink) !important;font-weight:800}
+  .data-table thead th.consol-col{background:#cffafe !important;color:#0e7490 !important;border-left:2px solid #67e8f9}
+  .data-table td.consol-col{border-left:2px solid #67e8f9}
+  .data-table td.consol-col.cell-green{background:var(--green-bg-soft) !important;border-left:2px solid #67e8f9}
+  .data-table td.consol-col.cell-yellow{background:var(--yellow-bg-soft) !important;border-left:2px solid #67e8f9}
+  .data-table td.consol-col.cell-red{background:var(--red-bg-soft) !important;border-left:2px solid #67e8f9}
+
+  .delta-up{color:var(--green);font-weight:600}
+  .delta-down{color:var(--red);font-weight:600}
+  .delta-flat{color:var(--muted)}
+
+  .capturing th,.capturing td{position:static !important;box-shadow:none !important}
+
+  .resumo-head{
+    display:flex; flex-wrap:wrap; align-items:center; gap:14px;
+    background:#fff; border:1px solid var(--border); border-radius:12px;
+    padding:12px 14px; margin-bottom:14px; box-shadow:var(--shadow);
+  }
+  .resumo-head select{ width:auto; min-width:280px; }
+  .resumo-head .label{ font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;
+        letter-spacing:.04em; }
+  .resumo-empty{
+    text-align:center; padding:48px 20px; color:var(--muted);
+    background:#fff; border:2px dashed var(--border); border-radius:14px;
+  }
+
+  #loading{position:fixed;inset:0;background:rgba(238,242,247,.8);display:grid;place-items:center;
+        z-index:99;backdrop-filter:blur(2px)}
+  #loading .box{background:#fff;border-radius:14px;padding:22px 28px;text-align:center;
+        box-shadow:0 10px 40px -10px rgba(15,23,42,.3)}
+  #loading .box .t{font-weight:700;font-size:14px;margin-bottom:6px}
+  #loading .box .s{font-size:12px;color:var(--muted)}
+  .spinner{width:32px;height:32px;border:3px solid #cfdcee;border-top-color:var(--accent);
+        border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  @media(max-width:1100px){
+    .charts-grid{grid-template-columns:1fr}
+  }
+  @media(max-width:860px){
+    .controls-grid{grid-template-columns:1fr}
+    .period-file{display:none}
+    .chart-wrap{height:290px}
+    .tabs button{min-width:120px;font-size:12px}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="hero">
+    <h1>📊 Painel Consolidado — Super BI · Conviva · Planejamento de Aula</h1>
+    <p>Painel único com quatro abas. Ao abrir, busca automaticamente os arquivos
+       <code>.xlsx/.xls/.csv</code> no diretório (via <code>files.json</code> ou listagem
+       do servidor), classifica pelo cabeçalho e distribui para a aba correta.
+       O <strong>Resumo da Escola</strong> consolida tudo em tabelas.</p>
+  </header>
+
+  <div class="global-bar">
+    <span class="title">📁 Arquivos</span>
+    <button id="reloadBtn" class="primary">🔄 Recarregar do servidor</button>
+    <button id="loadFiles">📄 Selecionar arquivos…</button>
+    <button id="loadDir">📂 Selecionar pasta local</button>
+    <input type="file" id="multiFileInput" multiple accept=".xlsx,.xls,.csv" hidden>
+    <input type="file" id="dirInput" webkitdirectory directory multiple hidden>
+    <span class="load-info" id="loadInfo">Inicializando…</span>
+  </div>
+
+  <nav class="tabs" id="tabsNav">
+    <button data-tab="superbi" class="active">📊 Super BI <span class="count" data-count="superbi">0</span></button>
+    <button data-tab="conviva">🏫 Conviva <span class="count" data-count="conviva">0</span></button>
+    <button data-tab="atpl">📅 Planejamento de Aula <span class="count" data-count="atpl">0</span></button>
+    <button data-tab="resumo">📋 Resumo da Escola</button>
+  </nav>
+
+  <div class="tab-panel active" data-panel="superbi" id="panel-superbi"></div>
+  <div class="tab-panel" data-panel="conviva" id="panel-conviva"></div>
+  <div class="tab-panel" data-panel="atpl" id="panel-atpl"></div>
+  <div class="tab-panel" data-panel="resumo" id="panel-resumo"></div>
+
+</div>
+
+<div id="loading" class="hidden">
+  <div class="box">
+    <div class="spinner"></div>
+    <div class="t">Carregando arquivos…</div>
+    <div class="s" id="loadingSub">Isso pode levar alguns segundos.</div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   PLUGIN DATALABELS
+   ========================================================= */
+if (window.ChartDataLabels && window.Chart){
+  Chart.register(ChartDataLabels);
+}
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+const PALETTE = ['#2563eb','#dc2626','#16a34a','#f59e0b','#7c3aed','#0891b2',
+                 '#db2777','#65a30d','#ea580c','#4f46e5','#0d9488','#b45309',
+                 '#9333ea','#475569','#e11d48','#0ea5e9'];
+const CONSOLIDADO_COLOR = '#0f172a';
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2,'0');
+
+function fmt(n){
+  if (n === null || n === undefined || (typeof n === 'number' && !isFinite(n))) return '—';
+  return Number(n).toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:2});
+}
+function fmtPct(n){
+  if (n === null || n === undefined || !isFinite(n)) return '—';
+  return (n > 0 ? '+' : '') + n.toLocaleString('pt-BR', {minimumFractionDigits:1, maximumFractionDigits:1}) + '%';
+}
+function toNum(v){
+  if (v === null || v === undefined) return null;
+  if (typeof v === 'number') return isFinite(v) ? v : null;
+  let s = String(v).trim();
+  if (!s) return null;
+  if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g,'').replace(',', '.');
+  else if (s.includes(',') && !s.includes('.')) s = s.replace(',', '.');
+  s = s.replace(/%/g,'').replace(/\s/g,'');
+  if (!/^-?\d*\.?\d+$/.test(s)) return null;
+  const n = Number(s);
+  return isFinite(n) ? n : null;
+}
+function normalizeLabel(label){
+  return String(label || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+function cleanHeader(h){
+  if (h == null) return '';
+  let s = String(h).trim();
+  const m = s.match(/\[([^\]]+)\]\s*$/);
+  if (m) s = m[1].trim();
+  s = s.replace(/^['"]+|['"]+$/g, '').trim();
+  s = s.replace(/\s+/g, ' ');
+  return s;
+}
+
+/* =========================================================
+   PERÍODO
+   ========================================================= */
+function extractPeriodFromFilters(ws){
+  const aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:null, blankrows:false});
+  for (const row of aoa){
+    if (!row) continue;
+    for (const cell of row){
+      if (cell == null) continue;
+      const s = String(cell);
+      if (!/Filtros\s+aplicados|Intervalo_(Ultima_Semana|Semana_Atual)|Intervalo_Semana\b/i.test(s)) continue;
+      const txt = s.replace(/<br\s*\/?>/gi, '\n');
+      const m = txt.match(
+        /Intervalo_(?:Ultima_Semana|Semana_Atual|Semana)\s+é\s+(\d{1,3})\s*[-–—]\s*(\d{1,2})\/(\d{1,2})\s*(?:a|à|ate|até)\s*(\d{1,2})\/(\d{1,2})/i
+      );
+      if (m){
+        const w = +m[1], d1 = +m[2], mo1 = +m[3], d2 = +m[4], mo2 = +m[5];
+        return { week:w,
+          label:`Semana ${pad(w)} · ${pad(d1)}/${pad(mo1)} a ${pad(d2)}/${pad(mo2)}`,
+          short:`S${pad(w)}`, sortKey:w, explicit:true, relative:null };
+      }
+      if (/Intervalo_(?:Ultima_Semana|Semana_Atual)\s+é\s+Semana\s+Anterior/i.test(txt)){
+        return { week:null, label:'Semana Anterior', short:'Anterior', sortKey:null, explicit:false, relative:'previous' };
+      }
+      if (/Intervalo_(?:Ultima_Semana|Semana_Atual)\s+é\s+Semana\s+Atual/i.test(txt)){
+        return { week:null, label:'Semana Atual', short:'Atual', sortKey:null, explicit:false, relative:'current' };
+      }
+    }
+  }
+  return null;
+}
+function detectPeriodFromName(fileName){
+  const base = fileName.replace(/\.[^.]+$/, '');
+  let m;
+  m = base.match(/(20\d{2})[.\-_](\d{1,2})[.\-_](\d{1,2})/);
+  if (m){ const y=+m[1],mo=+m[2],d=+m[3];
+    return { week:null, label:`${pad(d)}/${pad(mo)}/${y}`, short:`${pad(d)}/${pad(mo)}`,
+             sortKey: Date.UTC(y,mo-1,d), explicit:false, relative:null }; }
+  m = base.match(/(\d{1,2})[.\-_](\d{1,2})[.\-_](20\d{2}|\d{2})/);
+  if (m){ const d=+m[1],mo=+m[2]; let y=+m[3]; if (y<100) y+=2000;
+    return { week:null, label:`${pad(d)}/${pad(mo)}/${y}`, short:`${pad(d)}/${pad(mo)}`,
+             sortKey: Date.UTC(y,mo-1,d), explicit:false, relative:null }; }
+  m = base.match(/(\d{1,2})\s*[-–]\s*(\d{1,2})\/(\d{1,2})\s*(?:a|à|ate|até)\s*(\d{1,2})\/(\d{1,2})/i);
+  if (m){ const w=+m[1];
+    return { week:w, label:`Semana ${pad(w)} · ${pad(+m[2])}/${pad(+m[3])} a ${pad(+m[4])}/${pad(+m[5])}`,
+             short:`S${pad(w)}`, sortKey:w, explicit:true, relative:null }; }
+  m = base.match(/semana[\s\-_.]*(\d{1,3})/i);
+  if (m){ const w=+m[1];
+    return { week:w, label:`Semana ${pad(w)}`, short:`S${pad(w)}`, sortKey:w, explicit:true, relative:null }; }
+  return { week:null, label: base, short: base, sortKey:null, explicit:false, relative:null };
+}
+
+/* =========================================================
+   HEADER / ROWS
+   ========================================================= */
+function findHeaderRow(aoa){
+  for (let i = 0; i < Math.min(aoa.length, 60); i++){
+    const row = aoa[i] || [];
+    if (row.some(c => typeof c === 'string' && /^escolas?$/i.test(c.trim()))) return i;
+  }
+  return -1;
+}
+function collectDataRows(aoa, headerRowIdx, nameIdx){
+  const dataRows = [];
+  let totalRowRaw = null;
+  for (let i = headerRowIdx + 1; i < aoa.length; i++){
+    const row = aoa[i] || [];
+    const raw = row[nameIdx];
+    const name = raw == null ? '' : String(raw).trim();
+    if (!name) continue;
+    if (/^filtros aplicados/i.test(name)) break;
+    if (/^total$/i.test(name)){ totalRowRaw = row; continue; }
+    dataRows.push(row);
+  }
+  return { dataRows, totalRowRaw };
+}
+
+/* =========================================================
+   MÓDULOS
+   ========================================================= */
+const MODULE_CFG = {
+  superbi: {
+    title: 'Super BI', icon: '📊', label: 'Índices Escolares',
+    parseWorkbook(wb, fileName){
+      const sheetName = wb.SheetNames.includes('Export') ? 'Export' : wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName]; if (!ws) return null;
+      const aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null, blankrows:true});
+      const hIdx = findHeaderRow(aoa); if (hIdx === -1) return null;
+      const header = (aoa[hIdx] || []).map(c => c == null ? '' : String(c).replace(/\s+/g,' ').trim());
+      const nameIdx = header.findIndex(h => /^escolas?$/i.test(h)); if (nameIdx === -1) return null;
+      const headerJoin = header.join('|').toLowerCase();
+      if (!/nota final|aluno presente|professor presente/.test(headerJoin)) return null;
+      const { dataRows, totalRowRaw } = collectDataRows(aoa, hIdx, nameIdx);
+      const isMetric = header.map((h, idx) => {
+        if (idx === nameIdx) return false;
+        if (!h || h.startsWith('_')) return false;
+        let nonEmpty = 0, numeric = 0;
+        for (const row of dataRows){
+          const v = row[idx];
+          if (v === null || v === undefined || String(v).trim() === '') continue;
+          nonEmpty++; if (toNum(v) !== null) numeric++;
+        }
+        return nonEmpty > 0 && (numeric / nonEmpty) >= 0.6;
+      });
+      const metrics = {};
+      header.forEach((h, idx) => {
+        if (!isMetric[idx]) return;
+        const m = h.match(/\(([\d.,]+)\)\s*$/);
+        const peso = m ? toNum(m[1]) : null;
+        const label = m ? h.slice(0, m.index).trim() : h;
+        metrics[h] = { key:h, label, isPercent:false, peso };
+      });
+      const buildValues = row => { const v = {};
+        header.forEach((h, idx) => { if (isMetric[idx]) v[h] = toNum(row[idx]); }); return v; };
+      const rows = dataRows.map(row => ({ nome:String(row[nameIdx]).trim(), values:buildValues(row) }));
+      const totalRow = totalRowRaw ? { nome:'Total', values:buildValues(totalRowRaw) } : null;
+      let period = extractPeriodFromFilters(ws);
+      let periodSource = 'filtro';
+      if (!period){ period = detectPeriodFromName(fileName); periodSource = 'arquivo'; }
+      return { id:'ds_'+Math.random().toString(36).slice(2,9), fileName, week:period.week, periodSource,
+               label:period.label, short:period.short, sortKey:period.sortKey,
+               explicitWeek:!!period.explicit, relativeWeek:period.relative||null,
+               userEdited:false, metrics, rows, totalRow };
+    },
+    formatValue(metric, value){
+      if (value == null || !isFinite(value)) return '—';
+      const L = normalizeLabel(metric.label);
+      if (L.includes('aluno presente') || L.includes('professor presente'))
+        return (value*100).toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:1}) + '%';
+      return fmt(value);
+    },
+    formatDelta(metric, value){
+      if (value == null || !isFinite(value)) return '—';
+      const L = normalizeLabel(metric.label);
+      if (L.includes('aluno presente') || L.includes('professor presente')){
+        const p = value*100;
+        return (p>0?'+':'') + p.toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:1}) + '%';
+      }
+      return (value>0?'+':'') + fmt(value);
+    },
+    cellClass(metric, value){
+      if (value == null || !isFinite(value)) return '';
+      const L = normalizeLabel(metric.label);
+      if (L.includes('aluno presente') || L.includes('professor presente')){
+        if (value >= 0.90) return 'cell-green';
+        if (value < 0.85)  return 'cell-red';
+        return 'cell-yellow';
+      }
+      if (L.includes('apoio presencial')){
+        if (value >= 3) return 'cell-green';
+        if (value >= 2) return 'cell-yellow';
+        return 'cell-red';
+      }
+      if (L.includes('tarefa sp') || L.includes('tarefa')){
+        if (value >= 7.5) return 'cell-green';
+        if (value >= 5)   return 'cell-yellow';
+        return 'cell-red';
+      }
+      return '';
+    },
+    preferredTableMetric(metrics){
+      return metrics.find(m => m.key === 'Nota Final')?.key || metrics[0]?.key || null;
+    },
+    pairKey(){ return null; }
+  },
+
+  conviva: {
+    title: 'Conviva', icon: '🏫', label: 'Conviva (ocorrências)',
+    parseWorkbook(wb, fileName){
+      const sheetName = wb.SheetNames.includes('Export') ? 'Export' : wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName]; if (!ws) return null;
+      const aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null, blankrows:true});
+      const hIdx = findHeaderRow(aoa); if (hIdx === -1) return null;
+      const rawHeader = (aoa[hIdx] || []);
+      const cleanedHeader = rawHeader.map(cleanHeader);
+      const nameIdx = cleanedHeader.findIndex(h => /^escolas?$/i.test(h)); if (nameIdx === -1) return null;
+      const headerJoin = cleanedHeader.join('|').toLowerCase();
+      if (!/total de ocorr|chamados amarelos|chamados vermelhos/.test(headerJoin)) return null;
+      const { dataRows, totalRowRaw } = collectDataRows(aoa, hIdx, nameIdx);
+      const isMetric = rawHeader.map((h, idx) => {
+        if (idx === nameIdx) return false;
+        const ch = cleanedHeader[idx];
+        if (!ch || /^_?dummy/i.test(ch) || /^filtros/i.test(ch)) return false;
+        let nonEmpty = 0, numeric = 0;
+        for (const row of dataRows){
+          const v = row[idx];
+          if (v === null || v === undefined || String(v).trim() === '') continue;
+          nonEmpty++; if (toNum(v) !== null) numeric++;
+        }
+        return nonEmpty > 0 && (numeric / nonEmpty) >= 0.5;
+      });
+      const metrics = {}, colToKey = {}; let lastBase = null;
+      rawHeader.forEach((raw, idx) => {
+        if (idx === nameIdx || !isMetric[idx]) return;
+        const ch = cleanedHeader[idx]; if (!ch) return;
+        if (ch === '(%)'){
+          if (lastBase){
+            const key = lastBase + '__pct', label = lastBase + ' (%)';
+            if (!metrics[key]) metrics[key] = { key, label, isPercent:true, peso:null };
+            colToKey[idx] = key;
+          }
+          return;
+        }
+        const wm = ch.match(/\((\d+(?:[.,]\d+)?)\)\s*$/);
+        const peso = wm ? toNum(wm[1]) : null;
+        const rawLabel = wm ? ch.slice(0, wm.index).trim() : ch;
+        if (/\(%\)/.test(rawLabel)){
+          const cleanLabel = rawLabel.replace(/\(%\)\s*/g,'').trim(); if (!cleanLabel) return;
+          const key = cleanLabel + '__pct';
+          const label = /^\(%\)/.test(rawLabel) ? rawLabel : (cleanLabel + ' (%)');
+          if (!metrics[key]) metrics[key] = { key, label, isPercent:true, peso };
+          colToKey[idx] = key;
+        } else {
+          if (!rawLabel) return;
+          const key = rawLabel + '__val';
+          if (!metrics[key]) metrics[key] = { key, label:rawLabel, isPercent:false, peso };
+          colToKey[idx] = key;
+          lastBase = rawLabel;
+        }
+      });
+      const buildValues = row => { const v = {};
+        Object.entries(colToKey).forEach(([idx,key]) => { v[key] = toNum(row[+idx]); }); return v; };
+      const rows = dataRows.map(row => ({ nome:String(row[nameIdx]).trim(), values:buildValues(row) }));
+      const totalRow = totalRowRaw ? { nome:'Total', values:buildValues(totalRowRaw) } : null;
+      let period = extractPeriodFromFilters(ws); let periodSource = 'filtro';
+      if (!period){ period = detectPeriodFromName(fileName); periodSource = 'arquivo'; }
+      return { id:'ds_'+Math.random().toString(36).slice(2,9), fileName, week:period.week, periodSource,
+               label:period.label, short:period.short, sortKey:period.sortKey,
+               explicitWeek:!!period.explicit, relativeWeek:period.relative||null,
+               userEdited:false, metrics, rows, totalRow };
+    },
+    formatValue(metric, value){
+      if (value == null || !isFinite(value)) return '—';
+      if (metric.isPercent) return (value*100).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:1}) + '%';
+      return fmt(value);
+    },
+    formatDelta(metric, value){
+      if (value == null || !isFinite(value)) return '—';
+      if (metric.isPercent){ const p = value*100;
+        return (p>0?'+':'') + p.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:1}) + '%'; }
+      return (value>0?'+':'') + fmt(value);
+    },
+    cellClass(metric, value){
+      if (value == null || !isFinite(value)) return '';
+      const L = normalizeLabel(metric.label), P = !!metric.isPercent;
+      if (P && L.includes('amarelo')){
+        if (value < 0.3) return 'cell-green'; if (value < 0.6) return 'cell-yellow'; return 'cell-red';
+      }
+      if (P && L.includes('vermelho')){
+        if (value < 0.15) return 'cell-green'; if (value < 0.3) return 'cell-yellow'; return 'cell-red';
+      }
+      if (L.includes('preenchimento')){
+        if (value >= 0.9) return 'cell-green'; if (value >= 0.7) return 'cell-yellow'; return 'cell-red';
+      }
+      if (P && L.includes('concluid')){
+        if (value >= 0.8) return 'cell-green'; if (value >= 0.5) return 'cell-yellow'; return 'cell-red';
+      }
+      if (P && (L.includes('encaminhado')||L.includes('psicolog')||L.includes('atendido')||L.includes('rede'))){
+        if (value >= 0.8) return 'cell-green'; if (value >= 0.5) return 'cell-yellow'; return 'cell-red';
+      }
+      return '';
+    },
+    preferredTableMetric(metrics){
+      const pref = ['Total de Ocorrências__val','Chamados Amarelos__val','Chamados Vermelhos__val'];
+      return pref.find(k => metrics.some(m => m.key === k)) || metrics[0]?.key || null;
+    },
+    pairKey(metricKey){
+      if (metricKey.endsWith('__pct')){
+        const clean = metricKey.replace(/__pct$/,'');
+        const pairs = { 'Amarelos':'Chamados Amarelos__val', 'Vermelhos':'Chamados Vermelhos__val' };
+        return pairs[clean] || null;
+      }
+      return null;
+    }
+  },
+
+  atpl: {
+    title: 'Planejamento de Aula', icon: '📅', label: 'Planejamento de Aula',
+    parseWorkbook(wb, fileName){
+      const sheetName = wb.SheetNames.includes('Export') ? 'Export' : wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName]; if (!ws) return null;
+      const aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null, blankrows:true});
+      const hIdx = findHeaderRow(aoa); if (hIdx === -1) return null;
+      const rawHeader = (aoa[hIdx] || []);
+      const cleanedHeader = rawHeader.map(cleanHeader);
+      const nameIdx = cleanedHeader.findIndex(h => /^escolas?$/i.test(h)); if (nameIdx === -1) return null;
+      const headerJoin = cleanedHeader.join('|').toLowerCase();
+      if (!/docentes?|atpl/.test(headerJoin)) return null;
+      const { dataRows, totalRowRaw } = collectDataRows(aoa, hIdx, nameIdx);
+      const isMetric = rawHeader.map((h, idx) => {
+        if (idx === nameIdx) return false;
+        const ch = cleanedHeader[idx];
+        if (!ch || /^_?dummy/i.test(ch) || /^filtros/i.test(ch)) return false;
+        let nonEmpty = 0, numeric = 0;
+        for (const row of dataRows){
+          const v = row[idx];
+          if (v === null || v === undefined || String(v).trim() === '') continue;
+          nonEmpty++; if (toNum(v) !== null) numeric++;
+        }
+        return nonEmpty > 0 && (numeric / nonEmpty) >= 0.5;
+      });
+      const metrics = {}, colToKey = {}; let lastBase = null;
+      rawHeader.forEach((raw, idx) => {
+        if (idx === nameIdx || !isMetric[idx]) return;
+        const ch = cleanedHeader[idx]; if (!ch) return;
+        if (ch === '(%)'){
+          if (lastBase){
+            const key = lastBase + '__pct', label = lastBase + ' (%)';
+            if (!metrics[key]) metrics[key] = { key, label, isPercent:true, peso:null };
+            colToKey[idx] = key;
+          }
+          return;
+        }
+        const wm = ch.match(/\((\d+(?:[.,]\d+)?)\)\s*$/);
+        const peso = wm ? toNum(wm[1]) : null;
+        const rawLabel = wm ? ch.slice(0, wm.index).trim() : ch;
+        if (/\(%\)/.test(rawLabel)){
+          const cleanLabel = rawLabel.replace(/\(%\)\s*/g,'').trim(); if (!cleanLabel) return;
+          const key = cleanLabel + '__pct';
+          const label = /^\(%\)/.test(rawLabel) ? rawLabel : (cleanLabel + ' (%)');
+          if (!metrics[key]) metrics[key] = { key, label, isPercent:true, peso };
+          colToKey[idx] = key;
+        } else {
+          if (!rawLabel) return;
+          const key = rawLabel + '__val';
+          if (!metrics[key]) metrics[key] = { key, label:rawLabel, isPercent:false, peso };
+          colToKey[idx] = key;
+          lastBase = rawLabel;
+        }
+      });
+      const buildValues = row => { const v = {};
+        Object.entries(colToKey).forEach(([idx,key]) => { v[key] = toNum(row[+idx]); }); return v; };
+      const rows = dataRows.map(row => ({ nome:String(row[nameIdx]).trim(), values:buildValues(row) }));
+      const totalRow = totalRowRaw ? { nome:'Total', values:buildValues(totalRowRaw) } : null;
+      let period = extractPeriodFromFilters(ws); let periodSource = 'filtro';
+      if (!period){ period = detectPeriodFromName(fileName); periodSource = 'arquivo'; }
+      return { id:'ds_'+Math.random().toString(36).slice(2,9), fileName, week:period.week, periodSource,
+               label:period.label, short:period.short, sortKey:period.sortKey,
+               explicitWeek:!!period.explicit, relativeWeek:period.relative||null,
+               userEdited:false, metrics, rows, totalRow };
+    },
+    formatValue(metric, value){
+      if (value == null || !isFinite(value)) return '—';
+      if (metric.isPercent) return (value*100).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:1}) + '%';
+      return fmt(value);
+    },
+    formatDelta(metric, value){
+      if (value == null || !isFinite(value)) return '—';
+      if (metric.isPercent){ const p = value*100;
+        return (p>0?'+':'') + p.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:1}) + '%'; }
+      return (value>0?'+':'') + fmt(value);
+    },
+    cellClass(metric, value){
+      if (value == null || !isFinite(value)) return '';
+      const L = normalizeLabel(metric.label);
+      if (L.includes('docentes ativos')){
+        if (value >= 0.9) return 'cell-green';
+        if (value >= 0.8) return 'cell-yellow';
+        return 'cell-red';
+      }
+      if (L.includes('atpls conclui')){
+        if (value >= 0.75) return 'cell-green';
+        if (value >= 0.5)  return 'cell-yellow';
+        return 'cell-red';
+      }
+      return '';
+    },
+    preferredTableMetric(metrics){
+      const pref = ['de Docentes Ativos no Período__pct','ATPLs Concluídos__pct','Total Docentes Previstos__val'];
+      return pref.find(k => metrics.some(m => m.key === k)) || metrics[0]?.key || null;
+    },
+    pairKey(metricKey){
+      if (metricKey.endsWith('__pct')){
+        const clean = metricKey.replace(/__pct$/,'');
+        if (/docentes ativos/i.test(clean)) return 'Total Docentes Previstos__val';
+        if (/atpls conclui/i.test(clean))   return 'ATPLs Previstos__val';
+      }
+      return null;
+    }
+  }
+};
+
+/* =========================================================
+   ESTADO POR MÓDULO
+   ========================================================= */
+const MODULES = {};
+for (const key of Object.keys(MODULE_CFG)){
+  MODULES[key] = {
+    key, cfg: MODULE_CFG[key],
+    datasets: [], metrics: [], entities: [], hasTotal: false,
+    commonSet: new Set(),
+    selectedEntities: new Set(['__MEDIA__']),
+    selectedMetrics: new Set(), knownMetricKeys: new Set(),
+    focusEntity: '__MEDIA__', tableMetric: null,
+    onlyCommon: false, showDataLabels: true,
+    manualOrder: false, selectionMode: 'multi', charts: []
+  };
+}
+
+/* =========================================================
+   HTML DOS PAINÉIS
+   ========================================================= */
+function buildModulePanel(m){
+  const cfg = m.cfg;
+  return `
+    <section class="card">
+      <div class="drop" id="drop-${m.key}">
+        <input type="file" id="file-${m.key}" multiple accept=".xlsx,.xls,.csv" hidden>
+        <div class="drop-icon">📄</div>
+        <p><strong>Arraste planilhas ${esc(cfg.title)} aqui</strong> ou clique</p>
+        <p class="muted small">Também é possível carregar tudo automaticamente pela barra do topo.</p>
+      </div>
+    </section>
+    <section class="card hidden" id="periods-${m.key}">
+      <div class="periods-head">
+        <h2>🗓️ Períodos <span class="badge" id="periodCount-${m.key}">0</span></h2>
+        <button class="btn danger" data-clear="${m.key}">Limpar</button>
+      </div>
+      <div class="period-list" id="periodList-${m.key}"></div>
+    </section>
+    <section class="card hidden" id="controls-${m.key}">
+      <h2>⚙️ Configurações</h2>
+      <div class="controls-grid">
+        <div>
+          <div class="ctrl-label">Modo de seleção</div>
+          <div class="mode-radios" id="modeRadios-${m.key}">
+            <label data-mode="multi"><input type="radio" name="selMode-${m.key}" value="multi" checked><span>📊 Comparar múltiplas</span></label>
+            <label data-mode="single"><input type="radio" name="selMode-${m.key}" value="single"><span>🎯 Focar em uma</span></label>
+          </div>
+          <div id="multiBlock-${m.key}">
+            <div class="ctrl-label" style="margin-top:14px">Entidade em foco</div>
+            <select id="focusEntity-${m.key}"></select>
+            <div class="ctrl-label" style="margin-top:14px">Entidades nos gráficos</div>
+            <div class="picker" id="entityPicker-${m.key}" style="grid-template-columns:1fr"></div>
+            <div class="picker-actions">
+              <button class="btn btn-consol" id="btnToggleConsol-${m.key}" type="button">➕ Incluir Consolidado</button>
+            </div>
+          </div>
+          <div id="singleBlock-${m.key}" class="hidden">
+            <div class="ctrl-label" style="margin-top:14px">Entidade em foco</div>
+            <select id="singleEntity-${m.key}"></select>
+            <div class="hint-single"><span class="ico">🎯</span><span>KPIs, gráficos e Tabela 1 usam apenas esta entidade.</span></div>
+          </div>
+          <label class="toggle"><input type="checkbox" id="onlyCommon-${m.key}"> Considerar apenas escolas presentes em todos os períodos</label>
+          <label class="toggle"><input type="checkbox" id="showDataLabels-${m.key}" checked> Mostrar valor sobre cada ponto</label>
+        </div>
+        <div>
+          <div class="ctrl-label">Métricas exibidas</div>
+          <div class="picker" id="metricPicker-${m.key}"></div>
+          <div class="picker-actions">
+            <button class="btn" data-selall="${m.key}">Selecionar todos</button>
+            <button class="btn" data-selnone="${m.key}">Limpar seleção</button>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="card hidden" id="kpi-${m.key}">
+      <h2>🎯 Resumo do avanço — <span class="muted" id="kpiEntityLabel-${m.key}"></span></h2>
+      <div class="kpis" id="kpis-${m.key}"></div>
+    </section>
+    <section class="card hidden" id="charts-${m.key}">
+      <h2>📊 Evolução por período</h2>
+      <div class="charts-grid" id="chartsGrid-${m.key}"></div>
+    </section>
+    <section class="card hidden" id="tables-${m.key}">
+      <h2>📋 Tabelas de resumo</h2>
+      <div class="tables-stack">
+        <div class="table-block" data-block="indexes-${m.key}">
+          <div class="table-block-head">
+            <h3>Tabela 1 — Evolução das métricas (entidade em foco)</h3>
+            <button class="copy-btn" type="button" data-copy="tableIndexes-${m.key}" data-html2canvas-ignore="true">📋 Copiar</button>
+          </div>
+          <div class="table-scroll"><table class="data-table" id="tableIndexes-${m.key}"></table></div>
+        </div>
+        <div class="table-block" data-block="schools-${m.key}">
+          <div class="table-block-head">
+            <h3>Tabela 2 — Evolução por escola</h3>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span class="small muted">Métrica:</span>
+              <select id="tableMetric-${m.key}" style="width:auto;min-width:220px;padding:5px 8px;font-size:12px"></select>
+              <button class="copy-btn" type="button" data-copy="tableSchools-${m.key}" data-html2canvas-ignore="true">📋 Copiar</button>
+            </div>
+          </div>
+          <div class="table-scroll"><table class="data-table" id="tableSchools-${m.key}"></table></div>
+        </div>
+      </div>
+    </section>
+  `;
+}
+document.getElementById('panel-superbi').innerHTML = buildModulePanel(MODULES.superbi);
+document.getElementById('panel-conviva').innerHTML = buildModulePanel(MODULES.conviva);
+document.getElementById('panel-atpl').innerHTML    = buildModulePanel(MODULES.atpl);
+
+/* =========================================================
+   TABS
+   ========================================================= */
+document.getElementById('tabsNav').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-tab]'); if (!btn) return;
+  const tab = btn.dataset.tab;
+  document.querySelectorAll('#tabsNav button').forEach(b => b.classList.toggle('active', b === btn));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === tab));
+  if (tab === 'resumo') renderResumo();
+});
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+const loadingEl = document.getElementById('loading');
+const loadingSub = document.getElementById('loadingSub');
+const loadInfoEl = document.getElementById('loadInfo');
+function setLoadInfo(msg){ loadInfoEl.textContent = msg; }
+function showLoading(sub){ loadingSub.textContent = sub || 'Isso pode levar alguns segundos.'; loadingEl.classList.remove('hidden'); }
+function hideLoading(){ loadingEl.classList.add('hidden'); }
+
+/* =========================================================
+   PROCESSAMENTO
+   ========================================================= */
+async function processBuffer(buf, fileName){
+  const wb = XLSX.read(new Uint8Array(buf), {type:'array'});
+  const target = classifyWorkbook(wb);
+  if (!target) return null;
+  const cfg = MODULE_CFG[target];
+  const ds = cfg.parseWorkbook(wb, fileName);
+  return ds ? { target, ds } : null;
+}
+
+function classifyWorkbook(wb){
+  const sheetName = wb.SheetNames.includes('Export') ? 'Export' : wb.SheetNames[0];
+  const ws = wb.Sheets[sheetName]; if (!ws) return null;
+  const aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null, blankrows:true});
+  const hIdx = findHeaderRow(aoa); if (hIdx === -1) return null;
+  const header = (aoa[hIdx] || []).map(c => c == null ? '' : String(c).replace(/\s+/g,' ').trim());
+  const cleaned = header.map(cleanHeader);
+  const join = (cleaned.join('|') + '|' + header.join('|')).toLowerCase();
+  if (/docentes? previstos|atpls? (previstos|conclu)/.test(join)) return 'atpl';
+  if (/total de ocorr|chamados? (amarelos?|vermelhos?)|encaminhado ao psicologo/.test(join)) return 'conviva';
+  if (/nota final|aluno presente|professor presente|saresp nota super/.test(join)) return 'superbi';
+  return null;
+}
+
+async function addToModule(target, ds){
+  if (!ds) return false;
+  const m = MODULES[target];
+  if (!m) return false;
+  if (m.datasets.some(d => d.fileName === ds.fileName)) return false;
+  m.datasets.push(ds);
+  return true;
+}
+
+/* =========================================================
+   AUTO-LOAD DO SERVIDOR
+   Estratégia 1: files.json (manifesto)
+   Estratégia 2: listagem de diretório (parse HTML)
+   ========================================================= */
+async function fetchManifest(){
+  const candidates = ['files.json', 'manifest.json', 'arquivos.json'];
+  for (const name of candidates){
+    try {
+      const r = await fetch(name, {cache:'no-store'});
+      if (!r.ok) continue;
+      const data = await r.json();
+      const list = Array.isArray(data) ? data : (data.files || []);
+      const files = list.filter(f => typeof f === 'string' && /\.(xlsx|xls|csv)$/i.test(f));
+      if (files.length) return files;
+    } catch(e){ /* ignora */ }
+  }
+  return [];
+}
+
+async function fetchDirectoryListing(){
+  try {
+    const r = await fetch('./', {cache:'no-store'});
+    if (!r.ok) return [];
+    const html = await r.text();
+    const out = [];
+    const re = /href=["']([^"']+\.(?:xlsx|xls|csv))["']/gi;
+    let m;
+    while ((m = re.exec(html))) {
+      let url = m[1];
+      if (url.startsWith('http')) continue;       // ignora links externos
+      if (url.startsWith('/')) url = url.slice(1);
+      out.push(url);
+    }
+    return [...new Set(out)];
+  } catch(e){ return []; }
+}
+
+async function autoLoadFromServer(silent){
+  if (!silent) showLoading('Procurando arquivos no servidor…');
+  setLoadInfo('🔄 Procurando arquivos…');
+
+  let files = await fetchManifest();
+  let origem = 'files.json';
+
+  if (!files.length){
+    files = await fetchDirectoryListing();
+    origem = 'listagem do servidor';
+  }
+
+  if (!files.length){
+    if (!silent) hideLoading();
+    setLoadInfo('ℹ️ Nenhum arquivo encontrado automaticamente. Use os botões para carregar.');
+    return;
+  }
+
+  const counters = { superbi:0, conviva:0, atpl:0, ignorados:0, duplicados:0 };
+
+  for (let i = 0; i < files.length; i++){
+    const url = files[i];
+    const name = url.split('/').pop().split('?')[0];
+    loadingSub.textContent = `Lendo ${i+1}/${files.length}: ${name}`;
+    try {
+      const res = await fetch(url, {cache:'no-store'});
+      if (!res.ok){ counters.ignorados++; continue; }
+      const buf = await res.arrayBuffer();
+      const wb = XLSX.read(new Uint8Array(buf), {type:'array'});
+      const target = classifyWorkbook(wb);
+      if (!target){ counters.ignorados++; continue; }
+      const ds = MODULE_CFG[target].parseWorkbook(wb, name);
+      if (!ds){ counters.ignorados++; continue; }
+      const added = await addToModule(target, ds);
+      if (added) counters[target]++;
+      else counters.duplicados++;
+    } catch(e){
+      console.error('Erro lendo', url, e);
+      counters.ignorados++;
+    }
+  }
+
+  for (const key of Object.keys(MODULES)) finalizeModule(MODULES[key]);
+  hideLoading();
+
+  const parts = [];
+  if (counters.superbi)  parts.push(`Super BI: ${counters.superbi}`);
+  if (counters.conviva)  parts.push(`Conviva: ${counters.conviva}`);
+  if (counters.atpl)     parts.push(`ATPL: ${counters.atpl}`);
+  if (counters.ignorados) parts.push(`ignorados: ${counters.ignorados}`);
+  if (counters.duplicados) parts.push(`duplicados: ${counters.duplicados}`);
+
+  setLoadInfo(`✅ Carregados via ${origem} — ${files.length} arquivo(s) — ${parts.join(' · ') || 'nada novo'}`);
+}
+
+/* =========================================================
+   UPLOAD MANUAL
+   ========================================================= */
+document.getElementById('loadFiles').addEventListener('click', () => {
+  document.getElementById('multiFileInput').click();
+});
+document.getElementById('multiFileInput').addEventListener('change', async e => {
+  await handleMultipleFiles(e.target.files);
+  e.target.value = '';
+});
+document.getElementById('loadDir').addEventListener('click', async () => {
+  if (window.showDirectoryPicker){
+    try {
+      const dirHandle = await window.showDirectoryPicker();
+      const files = [];
+      for await (const entry of dirHandle.values()){
+        if (entry.kind === 'file' && /\.(xlsx|xls|csv)$/i.test(entry.name)){
+          files.push(await entry.getFile());
+        }
+      }
+      await handleMultipleFiles(files);
+    } catch (e){
+      if (e.name !== 'AbortError') console.error(e);
+    }
+  } else {
+    document.getElementById('dirInput').click();
+  }
+});
+document.getElementById('dirInput').addEventListener('change', async e => {
+  await handleMultipleFiles(e.target.files);
+  e.target.value = '';
+});
+
+async function handleMultipleFiles(fileList){
+  const files = Array.from(fileList).filter(f => /\.(xlsx|xls|csv)$/i.test(f.name));
+  if (!files.length) return;
+  showLoading('Lendo arquivos selecionados…');
+  const counters = { superbi:0, conviva:0, atpl:0, ignorados:0, duplicados:0 };
+  for (let i = 0; i < files.length; i++){
+    const f = files[i];
+    loadingSub.textContent = `Lendo ${i+1}/${files.length}: ${f.name}`;
+    try {
+      const buf = await f.arrayBuffer();
+      const result = await processBuffer(buf, f.name);
+      if (!result){ counters.ignorados++; continue; }
+      const added = await addToModule(result.target, result.ds);
+      if (added) counters[result.target]++;
+      else counters.duplicados++;
+    } catch(e){ console.error(e); counters.ignorados++; }
+  }
+  for (const key of Object.keys(MODULES)) finalizeModule(MODULES[key]);
+  hideLoading();
+  setLoadInfo(`✅ Manual — Super BI: ${counters.superbi} · Conviva: ${counters.conviva} · ATPL: ${counters.atpl} · Ignorados: ${counters.ignorados} · Duplicados: ${counters.duplicados}`);
+}
+
+/* =========================================================
+   BOTÃO RECARREGAR
+   ========================================================= */
+document.getElementById('reloadBtn').addEventListener('click', () => {
+  // Limpa tudo
+  for (const m of Object.values(MODULES)){
+    m.datasets = []; m.metrics = []; m.entities = [];
+    m.selectedEntities = new Set(['__MEDIA__']);
+    m.selectedMetrics = new Set(); m.knownMetricKeys = new Set();
+    m.focusEntity = '__MEDIA__'; m.tableMetric = null;
+    m.manualOrder = false; m.selectionMode = 'multi';
+    renderModule(m);
+  }
+  updateTabCounts();
+  autoLoadFromServer(false);
+});
+
+/* =========================================================
+   DROPS INDIVIDUAIS POR MÓDULO
+   ========================================================= */
+for (const key of Object.keys(MODULES)){
+  const drop = document.getElementById(`drop-${key}`);
+  const fileInput = document.getElementById(`file-${key}`);
+  drop.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', async e => {
+    await handleFilesForModule(key, e.target.files);
+    e.target.value = '';
+  });
+  ['dragenter','dragover'].forEach(ev =>
+    drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave','drop'].forEach(ev =>
+    drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => {
+    if (e.dataTransfer && e.dataTransfer.files.length) handleFilesForModule(key, e.dataTransfer.files);
+  });
+}
+
+async function handleFilesForModule(key, fileList){
+  const files = Array.from(fileList).filter(f => /\.(xlsx|xls|csv)$/i.test(f.name));
+  if (!files.length) return;
+  showLoading('Lendo arquivos…');
+  const cfg = MODULE_CFG[key];
+  const m = MODULES[key];
+  for (let i = 0; i < files.length; i++){
+    const f = files[i];
+    loadingSub.textContent = `Lendo ${i+1}/${files.length}: ${f.name}`;
+    try {
+      const buf = await f.arrayBuffer();
+      const wb = XLSX.read(new Uint8Array(buf), {type:'array'});
+      const ds = cfg.parseWorkbook(wb, f.name);
+      if (ds && !m.datasets.some(d => d.fileName === f.name)) m.datasets.push(ds);
+    } catch(e){ console.error(e); }
+  }
+  finalizeModule(m);
+  hideLoading();
+}
+
+/* =========================================================
+   FINALIZAÇÃO / CONSOLIDAÇÃO
+   ========================================================= */
+function finalizeModule(m){
+  inferRelativeWeeks(m);
+  if (!m.manualOrder && m.datasets.length > 1){
+    const allHaveKey = m.datasets.every(d => typeof d.sortKey === 'number');
+    if (allHaveKey) m.datasets.sort((a,b) => a.sortKey - b.sortKey);
+  }
+  const counts = {};
+  m.datasets.forEach(d => {
+    counts[d.label] = (counts[d.label] || 0) + 1;
+    if (counts[d.label] > 1) d.label = d.label + ' (' + counts[d.label] + ')';
+  });
+  const metricMap = new Map();
+  m.datasets.forEach(d => {
+    Object.values(d.metrics).forEach(mt => { if (!metricMap.has(mt.key)) metricMap.set(mt.key, mt); });
+  });
+  m.metrics = [...metricMap.values()];
+  m.metrics.forEach(mt => { if (!m.knownMetricKeys.has(mt.key)) m.selectedMetrics.add(mt.key); });
+  [...m.selectedMetrics].forEach(k => { if (!metricMap.has(k)) m.selectedMetrics.delete(k); });
+  m.knownMetricKeys = new Set(m.metrics.map(mt => mt.key));
+
+  const seen = new Set(); const names = [];
+  m.datasets.forEach(d => d.rows.forEach(r => {
+    if (!seen.has(r.nome)){ seen.add(r.nome); names.push(r.nome); }
+  }));
+  m.entities = names;
+  m.hasTotal = m.datasets.some(d => d.totalRow);
+  if (m.datasets.length){
+    let set = new Set(m.datasets[0].rows.map(r => r.nome));
+    m.datasets.slice(1).forEach(d => {
+      const s = new Set(d.rows.map(r => r.nome));
+      set = new Set([...set].filter(n => s.has(n)));
+    });
+    m.commonSet = set;
+  } else m.commonSet = new Set();
+
+  const validEntities = new Set(['__MEDIA__','__CONSOLIDADO__',
+    ...(m.hasTotal ? ['__TOTAL__'] : []), ...m.entities]);
+  [...m.selectedEntities].forEach(e => { if (!validEntities.has(e)) m.selectedEntities.delete(e); });
+  if (m.selectedEntities.size === 0) m.selectedEntities.add('__MEDIA__');
+  if (!validEntities.has(m.focusEntity)) m.focusEntity = '__MEDIA__';
+  if (!m.tableMetric || !metricMap.has(m.tableMetric)){
+    m.tableMetric = m.cfg.preferredTableMetric(m.metrics);
+  }
+  renderModule(m);
+  updateTabCounts();
+}
+
+function inferRelativeWeeks(m){
+  m.datasets.forEach(d => {
+    if (d.relativeWeek && !d.userEdited){
+      d.week = null; d.sortKey = null;
+      if (d.relativeWeek === 'previous'){ d.label = 'Semana Anterior'; d.short = 'Anterior'; }
+      else if (d.relativeWeek === 'current'){ d.label = 'Semana Atual'; d.short = 'Atual'; }
+    }
+  });
+  const explicit = m.datasets.filter(d => d.explicitWeek && typeof d.week === 'number').map(d => d.week);
+  if (!explicit.length) return;
+  const minW = Math.min(...explicit), maxW = Math.max(...explicit);
+  m.datasets.forEach(d => {
+    if (!d.relativeWeek || d.userEdited) return;
+    if (d.relativeWeek === 'previous'){
+      const w = minW - 1;
+      d.week = w; d.sortKey = w; d.label = `Semana ${pad(w)} (Anterior)`; d.short = `S${pad(w)}`;
+    } else if (d.relativeWeek === 'current'){
+      const w = maxW + 1;
+      d.week = w; d.sortKey = w; d.label = `Semana ${pad(w)} (Atual)`; d.short = `S${pad(w)}`;
+    }
+  });
+}
+
+function updateTabCounts(){
+  for (const key of Object.keys(MODULES)){
+    const el = document.querySelector(`.count[data-count="${key}"]`);
+    if (el) el.textContent = MODULES[key].datasets.length;
+  }
+}
+
+/* =========================================================
+   VALORES
+   ========================================================= */
+function getValue(m, ds, entity, metricKey){
+  if (entity === '__CONSOLIDADO__') return getConsolidatedValue(m, ds, metricKey);
+  if (entity === '__MEDIA__'){
+    let sum = 0, n = 0;
+    for (const r of ds.rows){
+      if (m.onlyCommon && !m.commonSet.has(r.nome)) continue;
+      const v = r.values[metricKey];
+      if (typeof v === 'number' && isFinite(v)){ sum += v; n++; }
+    }
+    return n ? sum / n : null;
+  }
+  if (entity === '__TOTAL__'){
+    if (!ds.totalRow) return null;
+    const v = ds.totalRow.values[metricKey];
+    return typeof v === 'number' ? v : null;
+  }
+  const row = ds.rows.find(r => r.nome === entity);
+  if (!row) return null;
+  const v = row.values[metricKey];
+  return typeof v === 'number' ? v : null;
+}
+
+function getConsolidatedValue(m, ds, metricKey){
+  const metric = m.metrics.find(mt => mt.key === metricKey);
+  if (!metric) return null;
+  const eligible = ds.rows.filter(r => !m.onlyCommon || m.commonSet.has(r.nome));
+  if (!eligible.length) return null;
+  if (metric.isPercent){
+    const pairKey = m.cfg.pairKey(metricKey);
+    if (pairKey && m.metrics.some(mt => mt.key === pairKey)){
+      let num = 0, den = 0;
+      for (const r of eligible){
+        const w = r.values[pairKey], v = r.values[metricKey];
+        if (typeof w === 'number' && isFinite(w) && w > 0 &&
+            typeof v === 'number' && isFinite(v)){ num += w * v; den += w; }
+      }
+      if (den > 0) return num / den;
+    }
+    let sum = 0, n = 0;
+    for (const r of eligible){
+      const v = r.values[metricKey];
+      if (typeof v === 'number' && isFinite(v)){ sum += v; n++; }
+    }
+    return n ? sum / n : null;
+  }
+  let sum = 0, hasAny = false;
+  for (const r of eligible){
+    const v = r.values[metricKey];
+    if (typeof v === 'number' && isFinite(v)){ sum += v; hasAny = true; }
+  }
+  return hasAny ? sum : null;
+}
+
+function entityLabelOf(m, e){
+  if (e === '__MEDIA__') return m.onlyCommon ? 'Média (escolas comuns)' : 'Média geral';
+  if (e === '__CONSOLIDADO__') return 'Σ Consolidado (soma das escolas)';
+  if (e === '__TOTAL__') return 'Total (planilha)';
+  return e;
+}
+
+function deltaOf(values){
+  const idx = values.map((v,i) => [v,i]).filter(([v]) => typeof v === 'number' && isFinite(v));
+  if (idx.length < 2) return null;
+  const first = idx[0][0], last = idx[idx.length-1][0];
+  return { first, last, abs:last-first,
+           pct: first !== 0 ? ((last-first)/Math.abs(first))*100 : null,
+           iFirst: idx[0][1], iLast: idx[idx.length-1][1] };
+}
+
+/* =========================================================
+   RENDER — MÓDULO
+   ========================================================= */
+function renderModule(m){
+  const has = m.datasets.length > 0;
+  for (const suffix of ['periods','controls','kpi','charts','tables']){
+    document.getElementById(`${suffix}-${m.key}`).classList.toggle('hidden', !has);
+  }
+  if (!has) return;
+  renderPeriods(m); renderControls(m); renderKPIs(m); renderCharts(m); renderTables(m);
+}
+
+function renderPeriods(m){
+  document.getElementById(`periodCount-${m.key}`).textContent = m.datasets.length;
+  const list = document.getElementById(`periodList-${m.key}`);
+  list.innerHTML = m.datasets.map((d, i) => `
+    <div class="period-item" data-id="${d.id}">
+      <span class="period-idx">${i+1}</span>
+      <input type="text" value="${esc(d.label)}" data-role="label" spellcheck="false">
+      ${d.relativeWeek ? `<span class="tag-rel">relativa</span>` : ''}
+      <span class="period-file" title="${esc(d.fileName)} · origem: ${d.periodSource}">
+        ${d.periodSource === 'filtro' ? '📌' : '📄'} ${esc(d.fileName)}
+      </span>
+      <button class="icon-btn" data-act="up">▲</button>
+      <button class="icon-btn" data-act="down">▼</button>
+      <button class="icon-btn" data-act="del">✕</button>
+    </div>`).join('');
+}
+
+document.querySelectorAll('.period-list').forEach(list => {
+  const key = list.id.replace('periodList-','');
+  const m = MODULES[key];
+  list.addEventListener('click', e => {
+    const btn = e.target.closest('button[data-act]'); if (!btn) return;
+    const id = btn.closest('.period-item').dataset.id;
+    const idx = m.datasets.findIndex(d => d.id === id); if (idx === -1) return;
+    const act = btn.dataset.act;
+    if (act === 'del'){ m.datasets.splice(idx,1); finalizeModule(m); }
+    else if (act === 'up' && idx > 0){
+      m.manualOrder = true;
+      [m.datasets[idx-1], m.datasets[idx]] = [m.datasets[idx], m.datasets[idx-1]];
+      renderModule(m);
+    } else if (act === 'down' && idx < m.datasets.length - 1){
+      m.manualOrder = true;
+      [m.datasets[idx+1], m.datasets[idx]] = [m.datasets[idx], m.datasets[idx+1]];
+      renderModule(m);
+    }
+  });
+  list.addEventListener('input', e => {
+    if (e.target.dataset.role !== 'label') return;
+    const id = e.target.closest('.period-item').dataset.id;
+    const ds = m.datasets.find(d => d.id === id);
+    if (ds){ ds.label = e.target.value || ds.fileName; ds.userEdited = true; }
+    renderKPIs(m); renderCharts(m); renderTables(m);
+  });
+});
+
+function entityOptionsHTML(m){
+  let html = `<option value="__MEDIA__">📊 ${esc(entityLabelOf(m,'__MEDIA__'))}</option>`;
+  html += `<option value="__CONSOLIDADO__">Σ ${esc(entityLabelOf(m,'__CONSOLIDADO__'))}</option>`;
+  if (m.hasTotal) html += `<option value="__TOTAL__">Σ Total (planilha)</option>`;
+  html += m.entities.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  return html;
+}
+
+function renderControls(m){
+  const key = m.key;
+  document.querySelectorAll(`input[name="selMode-${key}"]`).forEach(r => {
+    r.checked = (r.value === m.selectionMode);
+    r.closest('label').classList.toggle('active', r.value === m.selectionMode);
+  });
+  document.getElementById(`multiBlock-${key}`).classList.toggle('hidden', m.selectionMode === 'single');
+  document.getElementById(`singleBlock-${key}`).classList.toggle('hidden', m.selectionMode !== 'single');
+
+  const focus = document.getElementById(`focusEntity-${key}`);
+  focus.innerHTML = entityOptionsHTML(m); focus.value = m.focusEntity;
+  if (focus.value !== m.focusEntity){ focus.value = '__MEDIA__'; m.focusEntity = '__MEDIA__'; }
+
+  const single = document.getElementById(`singleEntity-${key}`);
+  single.innerHTML = entityOptionsHTML(m); single.value = m.focusEntity;
+  if (single.value !== m.focusEntity){ single.value = '__MEDIA__'; m.focusEntity = '__MEDIA__'; }
+
+  const picker = document.getElementById(`entityPicker-${key}`);
+  const isConsolOn = m.selectedEntities.has('__CONSOLIDADO__');
+  let html = `
+    <label><input type="checkbox" data-ent="__MEDIA__" ${m.selectedEntities.has('__MEDIA__') ? 'checked' : ''}>
+      <span>📊 ${esc(entityLabelOf(m,'__MEDIA__'))}</span></label>
+    <label class="consolidado-opt">
+      <input type="checkbox" data-ent="__CONSOLIDADO__" ${isConsolOn ? 'checked' : ''}>
+      <span>Σ Consolidado</span>
+    </label>`;
+  if (m.hasTotal){
+    html += `<label><input type="checkbox" data-ent="__TOTAL__" ${m.selectedEntities.has('__TOTAL__') ? 'checked' : ''}>
+      <span>Σ Total (planilha)</span></label>`;
+  }
+  html += m.entities.map(n => `
+    <label><input type="checkbox" data-ent="${esc(n)}" ${m.selectedEntities.has(n) ? 'checked' : ''}>
+      <span title="${esc(n)}">${esc(n)}</span></label>`).join('');
+  picker.innerHTML = html;
+
+  document.getElementById(`metricPicker-${key}`).innerHTML = m.metrics.map(mt => `
+    <label>
+      <input type="checkbox" data-metric="${esc(mt.key)}" ${m.selectedMetrics.has(mt.key) ? 'checked' : ''}>
+      <span>${esc(mt.label)}</span>
+      ${mt.peso != null ? `<span class="peso">(${fmt(mt.peso)})</span>` : ''}
+    </label>`).join('');
+
+  document.getElementById(`onlyCommon-${key}`).checked = m.onlyCommon;
+  document.getElementById(`showDataLabels-${key}`).checked = m.showDataLabels;
+
+  const btn = document.getElementById(`btnToggleConsol-${key}`);
+  btn.classList.toggle('on', isConsolOn);
+  btn.textContent = isConsolOn ? '✓ Consolidado incluído' : '➕ Incluir Consolidado';
+}
+
+// Wire dos controles por módulo
+for (const key of Object.keys(MODULES)){
+  document.querySelectorAll(`input[name="selMode-${key}"]`).forEach(r => {
+    r.addEventListener('change', e => {
+      const m = MODULES[key];
+      m.selectionMode = e.target.value;
+      if (m.selectionMode === 'single') m.selectedEntities = new Set([m.focusEntity]);
+      else if (m.selectedEntities.size === 0) m.selectedEntities.add(m.focusEntity);
+      renderControls(m); renderKPIs(m); renderCharts(m); renderTables(m);
+    });
+  });
+  document.getElementById(`focusEntity-${key}`).addEventListener('change', e => {
+    const m = MODULES[key]; m.focusEntity = e.target.value;
+    renderKPIs(m); renderTables(m); renderCharts(m);
+  });
+  document.getElementById(`singleEntity-${key}`).addEventListener('change', e => {
+    const m = MODULES[key]; m.focusEntity = e.target.value;
+    m.selectedEntities = new Set([m.focusEntity]);
+    renderKPIs(m); renderTables(m); renderCharts(m);
+  });
+  document.getElementById(`entityPicker-${key}`).addEventListener('change', e => {
+    const cb = e.target.closest('input[data-ent]'); if (!cb) return;
+    const m = MODULES[key];
+    if (cb.checked) m.selectedEntities.add(cb.dataset.ent);
+    else m.selectedEntities.delete(cb.dataset.ent);
+    if (m.selectedEntities.size === 0) m.selectedEntities.add('__MEDIA__');
+    renderControls(m); renderCharts(m);
+  });
+  document.getElementById(`btnToggleConsol-${key}`).addEventListener('click', () => {
+    const m = MODULES[key];
+    if (m.selectedEntities.has('__CONSOLIDADO__')) m.selectedEntities.delete('__CONSOLIDADO__');
+    else {
+      m.selectedEntities.add('__CONSOLIDADO__');
+      if (m.selectionMode === 'single') m.selectionMode = 'multi';
+    }
+    renderControls(m); renderKPIs(m); renderCharts(m); renderTables(m);
+  });
+  document.getElementById(`metricPicker-${key}`).addEventListener('change', e => {
+    const cb = e.target.closest('input[data-metric]'); if (!cb) return;
+    const m = MODULES[key];
+    if (cb.checked) m.selectedMetrics.add(cb.dataset.metric);
+    else m.selectedMetrics.delete(cb.dataset.metric);
+    renderCharts(m);
+  });
+  document.querySelector(`[data-selall="${key}"]`).addEventListener('click', () => {
+    const m = MODULES[key]; m.selectedMetrics = new Set(m.metrics.map(mt => mt.key));
+    renderControls(m); renderCharts(m);
+  });
+  document.querySelector(`[data-selnone="${key}"]`).addEventListener('click', () => {
+    const m = MODULES[key]; m.selectedMetrics = new Set();
+    renderControls(m); renderCharts(m);
+  });
+  document.querySelector(`[data-clear="${key}"]`).addEventListener('click', () => {
+    const m = MODULES[key];
+    m.datasets = []; m.metrics = []; m.entities = [];
+    m.selectedEntities = new Set(['__MEDIA__']);
+    m.selectedMetrics = new Set(); m.knownMetricKeys = new Set();
+    m.focusEntity = '__MEDIA__'; m.tableMetric = null;
+    m.manualOrder = false; m.selectionMode = 'multi';
+    renderModule(m); updateTabCounts();
+  });
+  document.getElementById(`onlyCommon-${key}`).addEventListener('change', e => {
+    const m = MODULES[key]; m.onlyCommon = e.target.checked;
+    renderControls(m); renderKPIs(m); renderCharts(m); renderTables(m);
+  });
+  document.getElementById(`showDataLabels-${key}`).addEventListener('change', e => {
+    const m = MODULES[key]; m.showDataLabels = e.target.checked; renderCharts(m);
+  });
+  document.getElementById(`tableMetric-${key}`).addEventListener('change', e => {
+    const m = MODULES[key]; m.tableMetric = e.target.value; renderTables(m);
+  });
+}
+
+/* =========================================================
+   KPIs
+   ========================================================= */
+function renderKPIs(m){
+  const ent = m.focusEntity;
+  const modo = m.selectionMode === 'single' ? '🎯 Foco único' : '📊 Multi';
+  document.getElementById(`kpiEntityLabel-${m.key}`).textContent = `${modo} — ${entityLabelOf(m, ent)}`;
+  const metrics = m.metrics.filter(mt => m.selectedMetrics.has(mt.key));
+  const box = document.getElementById(`kpis-${m.key}`);
+  if (!metrics.length){ box.innerHTML = '<p class="muted small">Nenhuma métrica selecionada.</p>'; return; }
+  box.innerHTML = metrics.map(mt => {
+    const values = m.datasets.map(d => getValue(m, d, ent, mt.key));
+    const dlt = deltaOf(values);
+    const current = dlt ? dlt.last : (values.find(v => typeof v === 'number') ?? null);
+    const semColor = m.cfg.cellClass(mt, current);
+    let deltaHTML = '<div class="kpi-delta flat">sem variação</div>';
+    let sub = `${m.datasets.length} período(s)`;
+    if (dlt){
+      const cls = dlt.abs > 1e-9 ? 'up' : (dlt.abs < -1e-9 ? 'down' : 'flat');
+      const arrow = cls === 'up' ? '▲' : (cls === 'down' ? '▼' : '▬');
+      deltaHTML = `<div class="kpi-delta ${cls}">${arrow} ${m.cfg.formatDelta(mt, dlt.abs)}${dlt.pct !== null ? ' (' + fmtPct(dlt.pct) + ')' : ''}</div>`;
+      sub = `${m.datasets[dlt.iFirst].label} → ${m.datasets[dlt.iLast].label}`;
+    }
+    return `<div class="kpi ${semColor}">
+      <div class="kpi-label" title="${esc(mt.label)}">${esc(mt.label)}</div>
+      <div class="kpi-value">${m.cfg.formatValue(mt, current)}</div>
+      ${deltaHTML}
+      <div class="kpi-sub">${esc(sub)}</div>
+    </div>`;
+  }).join('');
+}
+
+/* =========================================================
+   GRÁFICOS
+   ========================================================= */
+function renderCharts(m){
+  m.charts.forEach(c => { try { c.destroy(); } catch(e){} });
+  m.charts = [];
+  const grid = document.getElementById(`chartsGrid-${m.key}`);
+  grid.innerHTML = '';
+  const metrics = m.metrics.filter(mt => m.selectedMetrics.has(mt.key));
+  const entities = m.selectionMode === 'single' ? [m.focusEntity] : [...m.selectedEntities];
+  const fullLabels  = m.datasets.map(d => d.label);
+  const shortLabels = m.datasets.map(d => d.short || d.label);
+  if (!metrics.length){ grid.innerHTML = '<p class="muted small">Selecione ao menos uma métrica.</p>'; return; }
+  if (!entities.length){ grid.innerHTML = '<p class="muted small">Nenhuma entidade selecionada.</p>'; return; }
+
+  const nWeeks = shortLabels.length;
+  const tickFont = nWeeks > 20 ? 9 : (nWeeks > 12 ? 10 : 11);
+  const rotate   = nWeeks > 14 ? 45 : 0;
+  const labelSize = nWeeks > 20 ? 9 : 10;
+
+  metrics.forEach((metric, mi) => {
+    const card = document.createElement('div');
+    card.className = 'chart-card';
+    card.innerHTML = `
+      <div class="chart-head">
+        <h3 title="${esc(metric.label)}">${esc(metric.label)}</h3>
+        <button class="copy-btn" type="button" data-html2canvas-ignore="true">📋 Copiar</button>
+      </div>
+      <div class="chart-wrap"><canvas></canvas></div>`;
+    grid.appendChild(card);
+
+    let normalIdx = 0;
+    const datasets = entities.map(ent => {
+      const isConsol = ent === '__CONSOLIDADO__';
+      let color;
+      if (isConsol) color = CONSOLIDADO_COLOR;
+      else { color = PALETTE[(normalIdx + mi) % PALETTE.length]; normalIdx++; }
+      return {
+        label: entityLabelOf(m, ent),
+        data: m.datasets.map(d => getValue(m, d, ent, metric.key)),
+        borderColor: color, backgroundColor: color,
+        pointBackgroundColor: color, pointBorderColor: '#fff', pointBorderWidth: 1.5,
+        borderWidth: isConsol ? 3.5 : 2.5,
+        borderDash: isConsol ? [7,4] : undefined,
+        tension: 0.3, spanGaps: true,
+        pointRadius: isConsol ? (nWeeks > 20 ? 4 : 5) : (nWeeks > 20 ? 3 : (nWeeks > 12 ? 4 : 5)),
+        pointHoverRadius: 7
+      };
+    });
+
+    const chart = new Chart(card.querySelector('canvas'), {
+      type: 'line',
+      data: { labels: shortLabels, datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 400 },
+        layout: { padding: { top: 34, right: 14, left: 6, bottom: 4 } },
+        interaction: { mode:'index', intersect:false },
+        plugins: {
+          legend: { display: entities.length > 1, position: 'bottom',
+            labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle:'circle',
+                      font: { size: 10 }, padding: 10 } },
+          tooltip: {
+            callbacks: {
+              title: items => items.length ? fullLabels[items[0].dataIndex] : '',
+              label: c => `${c.dataset.label}: ${m.cfg.formatValue(metric, c.parsed.y)}`
+            }
+          },
+          datalabels: {
+            display: ctx => {
+              if (!m.showDataLabels) return false;
+              const v = ctx.dataset.data[ctx.dataIndex];
+              return v != null && isFinite(v);
+            },
+            align: 'top', anchor: 'end', offset: 6, clamp: true, clip: false,
+            color: '#fff',
+            backgroundColor: ctx => ctx.dataset.borderColor,
+            borderColor: '#fff', borderWidth: 1.5, borderRadius: 6,
+            padding: { top: 2, bottom: 2, left: 5, right: 5 },
+            font: { size: labelSize, weight: '700' },
+            formatter: v => m.cfg.formatValue(metric, v)
+          }
+        },
+        scales: {
+          x: { grid: { display: false },
+               ticks: { autoSkip: false, maxRotation: rotate, minRotation: rotate,
+                        font: { size: tickFont, weight: '600' }, color: '#334155', padding: 4,
+                        callback: function(val, index){ return shortLabels[index] ?? val; } } },
+          y: { grace: '16%', grid: { color: '#eef2f7' },
+               ticks: { font: { size: 10 }, callback: v => m.cfg.formatValue(metric, v) } }
+        }
+      }
+    });
+    const btn = card.querySelector('.copy-btn');
+    btn.addEventListener('click', () => copyChartAsImage(card, chart, btn));
+    m.charts.push(chart);
+  });
+}
+
+/* =========================================================
+   TABELAS
+   ========================================================= */
+function renderTables(m){
+  const ent = m.focusEntity;
+  const labels = m.datasets.map(d => d.label);
+  const lastDs = m.datasets[m.datasets.length - 1];
+  const lastLabel = lastDs ? lastDs.label : '';
+
+  /* Tabela 1 */
+  const metrics = m.metrics.filter(mt => m.selectedMetrics.has(mt.key));
+  const t1 = document.getElementById(`tableIndexes-${m.key}`);
+  let head = `<thead><tr>
+    <th>Métrica</th>
+    ${labels.map(l => `<th>${esc(l)}</th>`).join('')}
+    <th class="consol-col" title="Consolidado da última semana (${esc(lastLabel)})">Σ Consolidado</th>
+    <th>Var.</th><th>Var.%</th>
+  </tr></thead>`;
+  let body = '';
+  metrics.forEach(mt => {
+    const values = m.datasets.map(d => getValue(m, d, ent, mt.key));
+    const dlt = deltaOf(values);
+    let deltaCell = '<td class="delta-flat">—</td>';
+    let pctCell   = '<td class="delta-flat">—</td>';
+    if (dlt){
+      const cls = dlt.abs > 1e-9 ? 'delta-up' : (dlt.abs < -1e-9 ? 'delta-down' : 'delta-flat');
+      deltaCell = `<td class="${cls}">${m.cfg.formatDelta(mt, dlt.abs)}</td>`;
+      pctCell   = `<td class="${cls}">${dlt.pct !== null ? fmtPct(dlt.pct) : '—'}</td>`;
+    }
+    const cells = values.map(v => {
+      const cls = m.cfg.cellClass(mt, v);
+      return `<td class="${cls}">${m.cfg.formatValue(mt, v)}</td>`;
+    }).join('');
+    const consolValue = lastDs ? getValue(m, lastDs, '__CONSOLIDADO__', mt.key) : null;
+    const consolCls   = m.cfg.cellClass(mt, consolValue);
+    const consolCell  = `<td class="consol-col ${consolCls}">${m.cfg.formatValue(mt, consolValue)}</td>`;
+    body += `<tr>
+      <td>${esc(mt.label)}</td>
+      ${cells}
+      ${consolCell}
+      ${deltaCell}${pctCell}
+    </tr>`;
+  });
+  t1.innerHTML = head + `<tbody>${body}</tbody>`;
+
+  /* Tabela 2 */
+  const sel = document.getElementById(`tableMetric-${m.key}`);
+  sel.innerHTML = m.metrics.map(mt =>
+    `<option value="${esc(mt.key)}" ${mt.key === m.tableMetric ? 'selected' : ''}>${esc(mt.label)}</option>`).join('');
+  const mk = m.tableMetric;
+  const metric = m.metrics.find(mt => mt.key === mk) || { key:mk, label:mk, isPercent:false };
+  const t2 = document.getElementById(`tableSchools-${m.key}`);
+  const head2 = `<thead><tr><th>Entidade</th>${labels.map(l => `<th>${esc(l)}</th>`).join('')}
+                 <th>Var.</th><th>Var.%</th></tr></thead>`;
+  let rows = [];
+  const mediaValues = m.datasets.map(d => getValue(m, d, '__MEDIA__', mk));
+  rows.push({ nome:'📊 ' + entityLabelOf(m,'__MEDIA__'), values:mediaValues,
+              delta: deltaOf(mediaValues), kind:'media' });
+  const consolValues = m.datasets.map(d => getValue(m, d, '__CONSOLIDADO__', mk));
+  rows.push({ nome:'Σ ' + entityLabelOf(m,'__CONSOLIDADO__'), values:consolValues,
+              delta: deltaOf(consolValues), kind:'consol' });
+  const schoolNames = m.onlyCommon ? m.entities.filter(n => m.commonSet.has(n)) : m.entities;
+  schoolNames.forEach(nome => {
+    const values = m.datasets.map(d => getValue(m, d, nome, mk));
+    rows.push({ nome, values, delta:deltaOf(values), kind:'school' });
+  });
+  const topRows = rows.filter(r => r.kind === 'media' || r.kind === 'consol');
+  const schoolRows = rows.filter(r => r.kind === 'school');
+  schoolRows.sort((a,b) => {
+    const va = a.delta ? a.delta.abs : -Infinity;
+    const vb = b.delta ? b.delta.abs : -Infinity;
+    return vb - va;
+  });
+  rows = [...topRows, ...schoolRows];
+  let body2 = rows.map(r => {
+    const dlt = r.delta;
+    let deltaCell = '<td class="delta-flat">—</td><td class="delta-flat">—</td>';
+    if (dlt){
+      const cls = dlt.abs > 1e-9 ? 'delta-up' : (dlt.abs < -1e-9 ? 'delta-down' : 'delta-flat');
+      deltaCell = `<td class="${cls}">${m.cfg.formatDelta(metric, dlt.abs)}</td>
+                   <td class="${cls}">${dlt.pct !== null ? fmtPct(dlt.pct) : '—'}</td>`;
+    }
+    const cells = r.values.map(v => {
+      const cls = m.cfg.cellClass(metric, v);
+      return `<td class="${cls}">${m.cfg.formatValue(metric, v)}</td>`;
+    }).join('');
+    const isSelected = m.selectionMode === 'single' && r.kind === 'school' && r.nome === m.focusEntity;
+    const rowClass = r.kind === 'media' ? 'media-row' :
+                     r.kind === 'consol' ? 'consol-row' :
+                     (isSelected ? 'selected-row' : '');
+    const prefix = isSelected ? '🎯 ' : '';
+    return `<tr class="${rowClass}">
+      <td title="${esc(r.nome)}">${prefix}${esc(r.nome)}</td>
+      ${cells}
+      ${deltaCell}
+    </tr>`;
+  }).join('');
+  if (!rows.length) body2 = `<tr><td colspan="${labels.length + 3}" class="muted">Sem dados.</td></tr>`;
+  t2.innerHTML = head2 + `<tbody>${body2}</tbody>`;
+}
+
+/* =========================================================
+   COPIAR
+   ========================================================= */
+async function copyChartAsImage(card, chart, btn){
+  if (!window.html2canvas){ btn.textContent = '❌ html2canvas';
+    setTimeout(() => btn.textContent = '📋 Copiar', 1500); return; }
+  const original = btn.textContent;
+  const prevBg = card.style.background, prevPad = card.style.padding;
+  card.style.background = '#ffffff'; card.style.padding = '16px';
+  btn.style.visibility = 'hidden';
+  try {
+    const canvas = await html2canvas(card, { backgroundColor:'#fff', scale:2, logging:false, useCORS:true });
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    if (!navigator.clipboard || !window.ClipboardItem) throw new Error('Clipboard indisponível');
+    await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+    btn.textContent = '✅ Copiado!'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1600);
+  } catch(e){
+    console.error(e);
+    btn.textContent = '❌ Falhou'; btn.classList.add('failed');
+    setTimeout(() => { btn.textContent = original; btn.classList.remove('failed'); }, 1800);
+  } finally {
+    btn.style.visibility = ''; card.style.background = prevBg; card.style.padding = prevPad;
+  }
+}
+
+async function copyTableAsImage(block, btn){
+  if (!window.html2canvas){ btn.textContent = '❌ html2canvas';
+    setTimeout(() => btn.textContent = '📋 Copiar', 1500); return; }
+  const original = btn.textContent;
+  const scroll = block.querySelector('.table-scroll');
+  const prevMaxH = scroll ? scroll.style.maxHeight : '';
+  const prevOver = scroll ? scroll.style.overflow : '';
+  const prevH    = scroll ? scroll.style.height : '';
+  if (scroll){ scroll.style.maxHeight = 'none'; scroll.style.overflow = 'visible'; scroll.style.height = 'auto'; }
+  block.classList.add('capturing');
+  const prevBg = block.style.background, prevPad = block.style.padding, prevRad = block.style.borderRadius;
+  block.style.background = '#fff'; block.style.padding = '14px'; block.style.borderRadius = '12px';
+  try {
+    const canvas = await html2canvas(block, { backgroundColor:'#fff', scale:2, logging:false, useCORS:true });
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    if (!navigator.clipboard || !window.ClipboardItem) throw new Error('Clipboard indisponível');
+    await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+    btn.textContent = '✅ Copiado!'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1600);
+  } catch(e){
+    console.error(e);
+    btn.textContent = '❌ Falhou'; btn.classList.add('failed');
+    setTimeout(() => { btn.textContent = original; btn.classList.remove('failed'); }, 1800);
+  } finally {
+    if (scroll){ scroll.style.maxHeight = prevMaxH; scroll.style.overflow = prevOver; scroll.style.height = prevH; }
+    block.classList.remove('capturing');
+    block.style.background = prevBg; block.style.padding = prevPad; block.style.borderRadius = prevRad;
+  }
+}
+
+document.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const table = document.getElementById(btn.dataset.copy); if (!table) return;
+    const block = table.closest('.table-block'); if (!block) return;
+    copyTableAsImage(block, btn);
+  });
+});
+
+/* =========================================================
+   RESUMO DA ESCOLA
+   ========================================================= */
+function renderResumo(){
+  const panel = document.getElementById('panel-resumo');
+  const anyData = Object.values(MODULES).some(m => m.datasets.length > 0);
+  if (!anyData){
+    panel.innerHTML = `
+      <div class="resumo-empty">
+        <div style="font-size:42px;margin-bottom:8px">📁</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:6px">Nenhum dado carregado</div>
+        <div>Aguarde o carregamento automático ou use os botões no topo.</div>
+      </div>`;
+    return;
+  }
+  const allSchools = new Set();
+  for (const m of Object.values(MODULES)) m.entities.forEach(n => allSchools.add(n));
+  const current = panel.dataset.school || '__MEDIA__';
+  let html = `
+    <div class="resumo-head">
+      <span class="label">Escola em foco</span>
+      <select id="resumoSchoolSelect">
+        <option value="__MEDIA__" ${current==='__MEDIA__'?'selected':''}>📊 Média geral</option>
+        <option value="__CONSOLIDADO__" ${current==='__CONSOLIDADO__'?'selected':''}>Σ Consolidado (soma)</option>
+        ${[...allSchools].sort().map(n =>
+          `<option value="${esc(n)}" ${current===n?'selected':''}>${esc(n)}</option>`).join('')}
+      </select>
+      <span class="muted small">Consolidado de todas as abas em tabelas.</span>
+    </div>`;
+  for (const key of ['superbi','conviva','atpl']){
+    const m = MODULES[key];
+    if (!m.datasets.length) continue;
+    html += buildResumoTable(m, current);
+  }
+  panel.innerHTML = html;
+  document.getElementById('resumoSchoolSelect').addEventListener('change', e => {
+    panel.dataset.school = e.target.value;
+    renderResumo();
+  });
+  panel.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const table = document.getElementById(btn.dataset.copy); if (!table) return;
+      const block = table.closest('.table-block'); if (!block) return;
+      copyTableAsImage(block, btn);
+    });
+  });
+}
+
+function buildResumoTable(m, entity){
+  const cfg = m.cfg;
+  const labels = m.datasets.map(d => d.label);
+  const lastDs = m.datasets[m.datasets.length - 1];
+  const lastLabel = lastDs ? lastDs.label : '';
+  const metrics = m.metrics;
+  let head = `<thead><tr>
+    <th>Métrica</th>
+    ${labels.map(l => `<th>${esc(l)}</th>`).join('')}
+    <th class="consol-col" title="Consolidado da última semana (${esc(lastLabel)})">Σ Consolidado</th>
+    <th>Var.</th><th>Var.%</th>
+  </tr></thead>`;
+  let body = '';
+  metrics.forEach(mt => {
+    const values = m.datasets.map(d => getValue(m, d, entity, mt.key));
+    const dlt = deltaOf(values);
+    let deltaCell = '<td class="delta-flat">—</td>';
+    let pctCell   = '<td class="delta-flat">—</td>';
+    if (dlt){
+      const cls = dlt.abs > 1e-9 ? 'delta-up' : (dlt.abs < -1e-9 ? 'delta-down' : 'delta-flat');
+      deltaCell = `<td class="${cls}">${cfg.formatDelta(mt, dlt.abs)}</td>`;
+      pctCell   = `<td class="${cls}">${dlt.pct !== null ? fmtPct(dlt.pct) : '—'}</td>`;
+    }
+    const cells = values.map(v => {
+      const cls = cfg.cellClass(mt, v);
+      return `<td class="${cls}">${cfg.formatValue(mt, v)}</td>`;
+    }).join('');
+    const consolValue = lastDs ? getValue(m, lastDs, '__CONSOLIDADO__', mt.key) : null;
+    const consolCls   = cfg.cellClass(mt, consolValue);
+    const consolCell  = `<td class="consol-col ${consolCls}">${cfg.formatValue(mt, consolValue)}</td>`;
+    body += `<tr>
+      <td>${esc(mt.label)}</td>
+      ${cells}
+      ${consolCell}
+      ${deltaCell}${pctCell}
+    </tr>`;
+  });
+  const tableId = `resumo-table-${m.key}`;
+  return `
+    <div class="table-block" data-block="resumo-${m.key}" style="margin-bottom:18px">
+      <div class="table-block-head">
+        <h3>${cfg.icon} ${esc(cfg.title)} — ${esc(cfg.label)}</h3>
+        <button class="copy-btn" type="button" data-copy="${tableId}" data-html2canvas-ignore="true">📋 Copiar</button>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table" id="${tableId}">
+          ${head}
+          <tbody>${body}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+/* =========================================================
+   INICIALIZAÇÃO AUTOMÁTICA
+   ========================================================= */
+window.addEventListener('DOMContentLoaded', () => {
+  // Pequeno delay para garantir que bibliotecas CDN terminaram
+  setTimeout(() => autoLoadFromServer(false), 300);
+});
+</script>
+</body>
+</html>
