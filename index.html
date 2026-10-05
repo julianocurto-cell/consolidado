@@ -148,8 +148,8 @@
   .picker-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
   .toggle{display:flex;align-items:center;gap:6px;font-size:12px;margin-top:8px;color:var(--muted);cursor:pointer}
 
-  .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
-  .kpi{border:1px solid var(--border);border-radius:11px;padding:10px 12px;background:#fbfcfe;transition:.2s}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+  .kpi{border:1px solid var(--border);border-radius:11px;padding:11px 13px;background:#fbfcfe;transition:.2s}
   .kpi.cell-green{background:var(--green-bg-soft);border-color:var(--green-bg)}
   .kpi.cell-yellow{background:var(--yellow-bg-soft);border-color:var(--yellow-bg)}
   .kpi.cell-red{background:var(--red-bg-soft);border-color:var(--red-bg)}
@@ -159,11 +159,14 @@
   .kpi.cell-green .kpi-value{color:var(--green-ink)}
   .kpi.cell-yellow .kpi-value{color:var(--yellow-ink)}
   .kpi.cell-red .kpi-value{color:var(--red-ink)}
-  .kpi-delta{font-size:11.5px;font-weight:600}
+  .kpi-delta{font-size:12px;font-weight:700;margin-bottom:2px}
   .kpi-delta.up{color:var(--green)}
   .kpi-delta.down{color:var(--red)}
   .kpi-delta.flat{color:var(--muted)}
-  .kpi-sub{font-size:10.5px;color:var(--muted);margin-top:2px}
+  .kpi-sub{font-size:10.5px;color:var(--muted);margin-top:2px;line-height:1.35}
+
+  /* Cor diferente para o card de avanço */
+  #kpiCardHeaderAvanco{ }
 
   .charts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
   .chart-card{border:1px solid var(--border);border-radius:12px;padding:12px 12px 8px;background:#fff;
@@ -657,10 +660,17 @@ function buildModulePanel(m){
         </div>
       </div>
     </section>
+
     <section class="card hidden" id="kpi-${m.key}">
-      <h2>🎯 Resumo do avanço — <span class="muted" id="kpiEntityLabel-${m.key}"></span></h2>
+      <h2>📊 Médias do período — <span class="muted" id="kpiEntityLabel-${m.key}"></span></h2>
       <div class="kpis" id="kpis-${m.key}"></div>
     </section>
+
+    <section class="card hidden" id="avanco-${m.key}">
+      <h2>📈 Avanço da primeira à última semana — <span class="muted" id="avancoEntityLabel-${m.key}"></span></h2>
+      <div class="kpis" id="avancoList-${m.key}"></div>
+    </section>
+
     <section class="card hidden" id="charts-${m.key}">
       <h2>📊 Evolução por período</h2>
       <div class="charts-grid" id="chartsGrid-${m.key}"></div>
@@ -935,7 +945,7 @@ function deltaOf(values){
    ========================================================= */
 function renderModule(m){
   const has = m.datasets.length > 0;
-  for (const suffix of ['periods','controls','kpi','charts','tables']){
+  for (const suffix of ['periods','controls','kpi','avanco','charts','tables']){
     const el = document.getElementById(`${suffix}-${m.key}`);
     if (el) el.classList.toggle('hidden', !has);
   }
@@ -953,7 +963,7 @@ function renderModule(m){
   const panel = document.getElementById(`panel-${m.key}`);
   panel?.querySelectorAll('.empty-panel').forEach(el => el.remove());
 
-  renderPeriods(m); renderControls(m); renderKPIs(m); renderCharts(m); renderTables(m);
+  renderPeriods(m); renderControls(m); renderKPIs(m); renderAvanco(m); renderCharts(m); renderTables(m);
 }
 
 function renderPeriods(m){
@@ -996,7 +1006,7 @@ document.querySelectorAll('.period-list').forEach(list => {
     const id = e.target.closest('.period-item').dataset.id;
     const ds = m.datasets.find(d => d.id === id);
     if (ds){ ds.label = e.target.value || ds.fileName; ds.userEdited = true; }
-    renderKPIs(m); renderCharts(m); renderTables(m);
+    renderKPIs(m); renderAvanco(m); renderCharts(m); renderTables(m);
   });
 });
 
@@ -1065,17 +1075,17 @@ for (const key of Object.keys(MODULES)){
       m.selectionMode = e.target.value;
       if (m.selectionMode === 'single') m.selectedEntities = new Set([m.focusEntity]);
       else if (m.selectedEntities.size === 0) m.selectedEntities.add(m.focusEntity);
-      renderControls(m); renderKPIs(m); renderCharts(m); renderTables(m);
+      renderControls(m); renderKPIs(m); renderAvanco(m); renderCharts(m); renderTables(m);
     });
   });
   document.getElementById(`focusEntity-${key}`).addEventListener('change', e => {
     const m = MODULES[key]; m.focusEntity = e.target.value;
-    renderKPIs(m); renderTables(m); renderCharts(m);
+    renderKPIs(m); renderAvanco(m); renderTables(m); renderCharts(m);
   });
   document.getElementById(`singleEntity-${key}`).addEventListener('change', e => {
     const m = MODULES[key]; m.focusEntity = e.target.value;
     m.selectedEntities = new Set([m.focusEntity]);
-    renderKPIs(m); renderTables(m); renderCharts(m);
+    renderKPIs(m); renderAvanco(m); renderTables(m); renderCharts(m);
   });
   document.getElementById(`entityPicker-${key}`).addEventListener('change', e => {
     const cb = e.target.closest('input[data-ent]'); if (!cb) return;
@@ -1092,26 +1102,26 @@ for (const key of Object.keys(MODULES)){
       m.selectedEntities.add('__CONSOLIDADO__');
       if (m.selectionMode === 'single') m.selectionMode = 'multi';
     }
-    renderControls(m); renderKPIs(m); renderCharts(m); renderTables(m);
+    renderControls(m); renderKPIs(m); renderAvanco(m); renderCharts(m); renderTables(m);
   });
   document.getElementById(`metricPicker-${key}`).addEventListener('change', e => {
     const cb = e.target.closest('input[data-metric]'); if (!cb) return;
     const m = MODULES[key];
     if (cb.checked) m.selectedMetrics.add(cb.dataset.metric);
     else m.selectedMetrics.delete(cb.dataset.metric);
-    renderCharts(m);
+    renderKPIs(m); renderAvanco(m); renderCharts(m);
   });
   document.querySelector(`[data-selall="${key}"]`).addEventListener('click', () => {
     const m = MODULES[key]; m.selectedMetrics = new Set(m.metrics.map(mt => mt.key));
-    renderControls(m); renderCharts(m);
+    renderControls(m); renderKPIs(m); renderAvanco(m); renderCharts(m);
   });
   document.querySelector(`[data-selnone="${key}"]`).addEventListener('click', () => {
     const m = MODULES[key]; m.selectedMetrics = new Set();
-    renderControls(m); renderCharts(m);
+    renderControls(m); renderKPIs(m); renderAvanco(m); renderCharts(m);
   });
   document.getElementById(`onlyCommon-${key}`).addEventListener('change', e => {
     const m = MODULES[key]; m.onlyCommon = e.target.checked;
-    renderControls(m); renderKPIs(m); renderCharts(m); renderTables(m);
+    renderControls(m); renderKPIs(m); renderAvanco(m); renderCharts(m); renderTables(m);
   });
   document.getElementById(`showDataLabels-${key}`).addEventListener('change', e => {
     const m = MODULES[key]; m.showDataLabels = e.target.checked; renderCharts(m);
@@ -1122,33 +1132,85 @@ for (const key of Object.keys(MODULES)){
 }
 
 /* =========================================================
-   KPIs
+   PAINEL 1 — MÉDIAS DO PERÍODO
    ========================================================= */
 function renderKPIs(m){
   const ent = m.focusEntity;
   const modo = m.selectionMode === 'single' ? '🎯 Foco único' : '📊 Multi';
-  document.getElementById(`kpiEntityLabel-${m.key}`).textContent = `${modo} — ${entityLabelOf(m, ent)}`;
+  document.getElementById(`kpiEntityLabel-${m.key}`).textContent =
+    `${modo} — ${entityLabelOf(m, ent)}`;
+
   const metrics = m.metrics.filter(mt => m.selectedMetrics.has(mt.key));
   const box = document.getElementById(`kpis-${m.key}`);
-  if (!metrics.length){ box.innerHTML = '<p class="muted small">Nenhuma métrica selecionada.</p>'; return; }
+
+  if (!metrics.length){
+    box.innerHTML = '<p class="muted small">Nenhuma métrica selecionada.</p>';
+    return;
+  }
+
+  box.innerHTML = metrics.map(mt => {
+    const values = m.datasets.map(d => getValue(m, d, ent, mt.key));
+    const valid  = values.filter(v => typeof v === 'number' && isFinite(v));
+    const media  = valid.length ? valid.reduce((a,b) => a+b, 0) / valid.length : null;
+    const semColor = m.cfg.cellClass(mt, media);
+    const nSemanas = valid.length;
+
+    return `<div class="kpi ${semColor}">
+      <div class="kpi-label" title="${esc(mt.label)}">${esc(mt.label)}</div>
+      <div class="kpi-value">${m.cfg.formatValue(mt, media)}</div>
+      <div class="kpi-sub">média de ${nSemanas} semana${nSemanas === 1 ? '' : 's'}</div>
+    </div>`;
+  }).join('');
+}
+
+/* =========================================================
+   PAINEL 2 — AVANÇO (1ª → última semana)
+   ========================================================= */
+function renderAvanco(m){
+  const ent = m.focusEntity;
+  const modo = m.selectionMode === 'single' ? '🎯 Foco único' : '📊 Multi';
+  document.getElementById(`avancoEntityLabel-${m.key}`).textContent =
+    `${modo} — ${entityLabelOf(m, ent)}`;
+
+  const metrics = m.metrics.filter(mt => m.selectedMetrics.has(mt.key));
+  const box = document.getElementById(`avancoList-${m.key}`);
+
+  if (!metrics.length){
+    box.innerHTML = '<p class="muted small">Nenhuma métrica selecionada.</p>';
+    return;
+  }
+
   box.innerHTML = metrics.map(mt => {
     const values = m.datasets.map(d => getValue(m, d, ent, mt.key));
     const dlt = deltaOf(values);
     const current = dlt ? dlt.last : (values.find(v => typeof v === 'number') ?? null);
     const semColor = m.cfg.cellClass(mt, current);
-    let deltaHTML = '<div class="kpi-delta flat">sem variação</div>';
-    let sub = `${m.datasets.length} período(s)`;
-    if (dlt){
-      const cls = dlt.abs > 1e-9 ? 'up' : (dlt.abs < -1e-9 ? 'down' : 'flat');
-      const arrow = cls === 'up' ? '▲' : (cls === 'down' ? '▼' : '▬');
-      deltaHTML = `<div class="kpi-delta ${cls}">${arrow} ${m.cfg.formatDelta(mt, dlt.abs)}${dlt.pct !== null ? ' (' + fmtPct(dlt.pct) + ')' : ''}</div>`;
-      sub = `${m.datasets[dlt.iFirst].label} → ${m.datasets[dlt.iLast].label}`;
+
+    // Sem variação possível (menos de 2 semanas válidas)
+    if (!dlt){
+      return `<div class="kpi ${semColor}">
+        <div class="kpi-label" title="${esc(mt.label)}">${esc(mt.label)}</div>
+        <div class="kpi-value">${m.cfg.formatValue(mt, current)}</div>
+        <div class="kpi-delta flat">▬ sem variação</div>
+        <div class="kpi-sub">apenas 1 semana válida</div>
+      </div>`;
     }
+
+    const cls = dlt.abs > 1e-9 ? 'up' : (dlt.abs < -1e-9 ? 'down' : 'flat');
+    const arrow = cls === 'up' ? '▲' : (cls === 'down' ? '▼' : '▬');
+    const deltaStr = m.cfg.formatDelta(mt, dlt.abs);
+    const pctStr   = dlt.pct !== null ? ' (' + fmtPct(dlt.pct) + ')' : '';
+    const firstLabel = m.datasets[dlt.iFirst].label;
+    const lastLabel  = m.datasets[dlt.iLast].label;
+
     return `<div class="kpi ${semColor}">
       <div class="kpi-label" title="${esc(mt.label)}">${esc(mt.label)}</div>
-      <div class="kpi-value">${m.cfg.formatValue(mt, current)}</div>
-      ${deltaHTML}
-      <div class="kpi-sub">${esc(sub)}</div>
+      <div class="kpi-value">${m.cfg.formatValue(mt, dlt.last)}</div>
+      <div class="kpi-delta ${cls}">${arrow} ${deltaStr}${pctStr}</div>
+      <div class="kpi-sub">
+        ${esc(firstLabel)} (${m.cfg.formatValue(mt, dlt.first)})<br>
+        → ${esc(lastLabel)} (${m.cfg.formatValue(mt, dlt.last)})
+      </div>
     </div>`;
   }).join('');
 }
@@ -1253,7 +1315,7 @@ function renderCharts(m){
 }
 
 /* =========================================================
-   TABELAS — Tabela 1 agora mostra "Média das semanas"
+   TABELAS — Tabela 1 com "Média das semanas"
    ========================================================= */
 function renderTables(m){
   const ent = m.focusEntity;
@@ -1288,7 +1350,6 @@ function renderTables(m){
       return `<td class="${cls}">${m.cfg.formatValue(mt, v)}</td>`;
     }).join('');
 
-    // === Média das semanas (média simples do índice) ===
     const validVals = values.filter(v => typeof v === 'number' && isFinite(v));
     const mediaSem  = validVals.length
       ? validVals.reduce((a, b) => a + b, 0) / validVals.length
@@ -1306,7 +1367,7 @@ function renderTables(m){
 
   t1.innerHTML = head + `<tbody>${body}</tbody>`;
 
-  /* ============ Tabela 2 (não muda) ============ */
+  /* ============ Tabela 2 ============ */
   const sel = document.getElementById(`tableMetric-${m.key}`);
   sel.innerHTML = m.metrics.map(mt =>
     `<option value="${esc(mt.key)}" ${mt.key === m.tableMetric ? 'selected' : ''}>${esc(mt.label)}</option>`).join('');
@@ -1479,9 +1540,6 @@ function renderResumo(){
   });
 }
 
-/* =========================================================
-   RESUMO — buildResumoTable também com "Média das semanas"
-   ========================================================= */
 function buildResumoTable(m, entity){
   const cfg = m.cfg;
   const labels = m.datasets.map(d => d.label);
