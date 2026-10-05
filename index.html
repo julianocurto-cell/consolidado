@@ -15,6 +15,7 @@
     --green:#16a34a; --green-bg:#86efac; --green-bg-soft:#bbf7d0; --green-ink:#14532d;
     --yellow:#ca8a04; --yellow-bg:#fde047; --yellow-bg-soft:#fef08a; --yellow-ink:#713f12;
     --red:#dc2626; --red-bg:#fca5a5; --red-bg-soft:#fecaca; --red-ink:#7f1d1d;
+    --gold:#f59e0b; --gold-soft:#fef3c7; --gold-ink:#92400e;
     --radius:14px;
     --shadow:0 1px 2px rgba(15,23,42,.06), 0 10px 28px -18px rgba(15,23,42,.35);
   }
@@ -74,6 +75,8 @@
   .card h2{margin:0 0 12px;font-size:14.5px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
   .card h2 .badge{background:var(--accent-soft);color:var(--accent);border-radius:999px;
         padding:1px 9px;font-size:11px;font-weight:700}
+  .card-head-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .card-head-row h2{margin:0}
   .hidden{display:none !important}
   .muted{color:var(--muted)}
   .small{font-size:12px}
@@ -88,8 +91,6 @@
         padding:5px 8px;font-size:12.5px;font-family:inherit;background:#fff}
   .period-file{color:var(--muted);font-size:11px;max-width:260px;overflow:hidden;text-overflow:ellipsis;
         white-space:nowrap;flex:none}
-  .tag-rel{background:#fef3c7;color:#92400e;border-radius:999px;font-size:10px;font-weight:700;
-        padding:2px 7px;flex:none}
   .icon-btn{border:1px solid var(--border);background:#fff;border-radius:7px;width:26px;height:26px;
         cursor:pointer;font-size:11px;color:var(--muted);display:grid;place-items:center;flex:none}
   .icon-btn:hover{background:#eef2f8;color:var(--text)}
@@ -97,11 +98,16 @@
   .btn{border:1px solid var(--border);background:#fff;border-radius:9px;padding:6px 12px;cursor:pointer;
        font-size:12.5px;font-family:inherit;font-weight:500;color:var(--text);transition:.15s}
   .btn:hover{background:#f1f5fb}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:#1d4ed8}
   .btn.danger{color:var(--red);border-color:#f3c9c9}
   .btn.danger:hover{background:#fee2e2}
   .btn.btn-consol{background:#0f172a; color:#fff; border-color:#0f172a; font-weight:600;}
   .btn.btn-consol:hover{ background:#1e293b; }
   .btn.btn-consol.on{ background:#0d9488; border-color:#0d9488; }
+  .btn.btn-edit{ background:linear-gradient(135deg,#f59e0b,#f97316); border:none; color:#fff; font-weight:700;
+        box-shadow:0 2px 8px -2px rgba(245,158,11,.5); }
+  .btn.btn-edit:hover{ background:linear-gradient(135deg,#d97706,#ea580c); }
 
   .controls-grid{display:grid;grid-template-columns:minmax(240px,1.1fr) minmax(280px,2fr);gap:18px}
   .ctrl-label{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
@@ -148,8 +154,9 @@
   .picker-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
   .toggle{display:flex;align-items:center;gap:6px;font-size:12px;margin-top:8px;color:var(--muted);cursor:pointer}
 
-  .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
-  .kpi{border:1px solid var(--border);border-radius:11px;padding:11px 13px;background:#fbfcfe;transition:.2s}
+  /* ---------- KPIs ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+  .kpi{position:relative;border:1px solid var(--border);border-radius:11px;padding:11px 13px;background:#fbfcfe;transition:.2s}
   .kpi.cell-green{background:var(--green-bg-soft);border-color:var(--green-bg)}
   .kpi.cell-yellow{background:var(--yellow-bg-soft);border-color:var(--yellow-bg)}
   .kpi.cell-red{background:var(--red-bg-soft);border-color:var(--red-bg)}
@@ -165,12 +172,29 @@
   .kpi-delta.flat{color:var(--muted)}
   .kpi-sub{font-size:10.5px;color:var(--muted);margin-top:2px;line-height:1.35}
 
-  /* Cor diferente para o card de avanço */
-  #kpiCardHeaderAvanco{ }
+  /* Destaque de índice (⭐) */
+  .kpi.highlight{
+    border:2.5px solid var(--gold);
+    box-shadow:0 0 0 3px rgba(245,158,11,.14), 0 6px 20px -10px rgba(245,158,11,.5);
+    background:linear-gradient(135deg, #fffbeb 0%, var(--gold-soft) 100%);
+  }
+  .kpi.highlight::after{
+    content:'⭐';
+    position:absolute; top:6px; right:9px;
+    font-size:13px;
+  }
+  .kpi.highlight .kpi-label{ color:var(--gold-ink); font-weight:700; }
+  .kpi.highlight .kpi-value{ color:var(--gold-ink); font-size:24px; }
 
+  /* ---------- GRÁFICOS ---------- */
   .charts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
   .chart-card{border:1px solid var(--border);border-radius:12px;padding:12px 12px 8px;background:#fff;
-        display:flex;flex-direction:column}
+        display:flex;flex-direction:column;transition:.2s}
+  .chart-card.highlight-chart{
+    border:2px solid var(--gold);
+    box-shadow:0 0 0 3px rgba(245,158,11,.12);
+  }
+  .chart-card.highlight-chart .chart-head h3{ color:var(--gold-ink); font-weight:700; }
   .chart-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
   .chart-head h3{margin:0;font-size:13px;font-weight:600;color:#334155}
   .copy-btn{padding:5px 10px;font-size:11.5px;font-weight:600;background:#fff;border:1px solid var(--border);
@@ -180,6 +204,7 @@
   .copy-btn.failed{background:var(--red-bg-soft);border-color:var(--red);color:var(--red-ink)}
   .chart-wrap{position:relative;height:340px}
 
+  /* ---------- TABELAS ---------- */
   .tables-stack{display:flex;flex-direction:column;gap:18px}
   .table-block{margin-bottom:0}
   .table-block-head{display:flex;justify-content:space-between;align-items:center;
@@ -221,6 +246,8 @@
   .data-table td.consol-col.cell-green{background:var(--green-bg-soft) !important;border-left:2px solid #67e8f9}
   .data-table td.consol-col.cell-yellow{background:var(--yellow-bg-soft) !important;border-left:2px solid #67e8f9}
   .data-table td.consol-col.cell-red{background:var(--red-bg-soft) !important;border-left:2px solid #67e8f9}
+  .data-table tr.highlight-row td:first-child::before{ content:'⭐ '; color:var(--gold); }
+  .data-table tr.highlight-row td:first-child{ color:var(--gold-ink); font-weight:800; }
 
   .delta-up{color:var(--green);font-weight:600}
   .delta-down{color:var(--red);font-weight:600}
@@ -240,6 +267,72 @@
     text-align:center; padding:48px 20px; color:var(--muted);
     background:#fff; border:2px dashed var(--border); border-radius:14px;
   }
+  .resumo-subtitle{
+    font-size:13px;font-weight:700;color:#334155;margin:22px 0 10px;
+    padding-bottom:6px;border-bottom:2px solid var(--border);
+  }
+  .resumo-subtitle:first-child{ margin-top:0; }
+
+  /* ---------- MODAL ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(15,23,42,.6);
+    display:none; align-items:center; justify-content:center;
+    z-index:200; padding:20px; backdrop-filter:blur(3px);
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal{
+    background:#fff; border-radius:14px; max-width:840px; width:100%;
+    max-height:92vh; display:flex; flex-direction:column;
+    box-shadow:0 20px 60px -15px rgba(15,23,42,.5);
+  }
+  .modal-head{
+    padding:18px 22px 14px; border-bottom:1px solid var(--border);
+  }
+  .modal-head h3{ margin:0 0 4px; font-size:16px; display:flex; align-items:center; gap:8px; }
+  .modal-head p{ margin:0; font-size:12.5px; color:var(--muted); line-height:1.5; }
+  .modal-body{
+    padding:16px 22px; overflow:auto; flex:1;
+  }
+  .modal-module{ margin-bottom:22px; }
+  .modal-module:last-child{ margin-bottom:0; }
+  .modal-module h4{
+    margin:0 0 8px; font-size:13px; color:#334155;
+    display:flex; align-items:center; gap:6px;
+    padding-bottom:6px; border-bottom:2px solid var(--border);
+  }
+  .modal-metrics{
+    display:grid; grid-template-columns:1fr; gap:0;
+    border:1px solid var(--border); border-radius:10px; padding:4px 12px;
+    background:#fbfcfe;
+  }
+  .modal-metric-row{
+    display:flex; align-items:center; gap:16px;
+    padding:7px 2px; font-size:12.5px;
+    border-bottom:1px solid #eef2f7;
+  }
+  .modal-metric-row:last-child{ border-bottom:none; }
+  .modal-metric-row .name{ flex:1; color:#334155; }
+  .modal-metric-row label{ display:flex; align-items:center; gap:5px; cursor:pointer; user-select:none; white-space:nowrap; }
+  .modal-metric-row input[type=checkbox]{ accent-color:var(--accent); width:14px; height:14px; }
+  .modal-metric-row .destacar-cb{ accent-color:var(--gold); }
+  .modal-metric-row .destacar-label{ color:var(--gold-ink); font-weight:600; }
+  .modal-metric-row .analisar-label{ color:#334155; }
+  .modal-actions{
+    padding:14px 22px; border-top:1px solid var(--border);
+    display:flex; justify-content:space-between; gap:8px; align-items:center;
+  }
+  .modal-actions .left{ font-size:11.5px; color:var(--muted); }
+  .modal-actions .right{ display:flex; gap:8px; }
+  .modal-actions button{
+    border-radius:9px; padding:9px 18px; font-size:13px;
+    font-family:inherit; font-weight:600; cursor:pointer;
+    border:1px solid var(--border); background:#fff; color:var(--text);
+  }
+  .modal-actions button:hover{ background:#f1f5fb; }
+  .modal-actions button.primary{
+    background:var(--accent); border-color:var(--accent); color:#fff;
+  }
+  .modal-actions button.primary:hover{ background:#1d4ed8; }
 
   #loading{position:fixed;inset:0;background:rgba(238,242,247,.8);display:grid;place-items:center;
         z-index:99;backdrop-filter:blur(2px)}
@@ -271,9 +364,9 @@
 
   <header class="hero">
     <h1>📊 Painel Consolidado — Super BI · Conviva · Planejamento de Aula</h1>
-    <p>Carregamento automático a partir dos três CSVs consolidados. O painel busca
-       <code>super_bi.csv</code>, <code>conviva.csv</code> e <code>planejamento_aula.csv</code>
-       (na pasta <code>excel/</code> ou na raiz) e distribui em quatro abas.</p>
+    <p>Carregamento automático a partir dos três CSVs consolidados. Destaque para <strong>Nota Final</strong>
+       e <strong>Tarefa SP</strong>. Use o botão <strong>⚙️ Editar índices</strong> para escolher o que
+       analisar e destacar — as preferências ficam salvas no navegador.</p>
   </header>
 
   <div class="global-bar">
@@ -294,6 +387,25 @@
   <div class="tab-panel" data-panel="atpl" id="panel-atpl"></div>
   <div class="tab-panel" data-panel="resumo" id="panel-resumo"></div>
 
+</div>
+
+<!-- ============== MODAL ============== -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>⚙️ Editar índices</h3>
+      <p>Escolha o que <strong>analisar</strong> (aparece na aba Resumo) e o que <strong>destacar</strong>
+         (aparece com ⭐ nos painéis). As preferências ficam salvas no navegador.</p>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-actions">
+      <span class="left">Preferências salvas automaticamente em <em>localStorage</em>.</span>
+      <div class="right">
+        <button id="modalCancel">Cancelar</button>
+        <button id="modalSave" class="primary">Salvar</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="loading" class="hidden">
@@ -317,12 +429,53 @@ const PALETTE = ['#2563eb','#dc2626','#16a34a','#f59e0b','#7c3aed','#0891b2',
                  '#db2777','#65a30d','#ea580c','#4f46e5','#0d9488','#b45309',
                  '#9333ea','#475569','#e11d48','#0ea5e9'];
 const CONSOLIDADO_COLOR = '#0f172a';
+const GOLD_COLOR = '#f59e0b';
 
 const CSV_SOURCES = {
   superbi: ['excel/super_bi.csv', 'super_bi.csv', './excel/super_bi.csv'],
   conviva: ['excel/conviva.csv', 'conviva.csv', './excel/conviva.csv'],
   atpl:    ['excel/planejamento_aula.csv', 'planejamento_aula.csv', './excel/planejamento_aula.csv'],
 };
+
+/* =========================================================
+   PREFERÊNCIAS (localStorage)
+   ========================================================= */
+const PREFS_KEY = 'painel_prefs_v1';
+const DEFAULT_HIGHLIGHTS = {
+  superbi: ['Nota Final', 'Tarefa SP'],
+  conviva: [],
+  atpl:    [],
+};
+
+function loadPrefs(){
+  try {
+    const raw = localStorage.getItem(PREFS_KEY);
+    if (!raw) return { highlights: { ...DEFAULT_HIGHLIGHTS }, resumoMetrics: null };
+    const parsed = JSON.parse(raw);
+    return {
+      highlights: { ...DEFAULT_HIGHLIGHTS, ...(parsed.highlights || {}) },
+      resumoMetrics: parsed.resumoMetrics || null,
+    };
+  } catch(e){
+    return { highlights: { ...DEFAULT_HIGHLIGHTS }, resumoMetrics: null };
+  }
+}
+function savePrefs(){
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify(PREFS)); } catch(e){}
+}
+
+const PREFS = loadPrefs();
+
+function isHighlighted(moduleKey, metricKey){
+  return (PREFS.highlights[moduleKey] || []).includes(metricKey);
+}
+function getResumoMetricsFor(moduleKey){
+  if (!PREFS.resumoMetrics) {
+    // Default: todas as métricas
+    return MODULES[moduleKey].metrics.map(m => m.key);
+  }
+  return PREFS.resumoMetrics[moduleKey] || [];
+}
 
 /* =========================================================
    HELPERS
@@ -403,12 +556,7 @@ function buildDatasetsFromCSV(csvText){
     if (!isFinite(valor)) continue;
 
     if (!byFile.has(arquivo)){
-      byFile.set(arquivo, {
-        semana, periodo,
-        rows: new Map(),
-        types: new Map(),
-        order: [],
-      });
+      byFile.set(arquivo, { semana, periodo, rows: new Map(), types: new Map(), order: [] });
     }
     const entry = byFile.get(arquivo);
     if (!entry.rows.has(escola)) entry.rows.set(escola, {});
@@ -428,12 +576,7 @@ function buildDatasetsFromCSV(csvText){
     const metrics = {};
     for (const name of entry.order){
       const tipo = entry.types.get(name);
-      metrics[name] = {
-        key: name,
-        label: name,
-        isPercent: tipo === 'percentual',
-        peso: null,
-      };
+      metrics[name] = { key: name, label: name, isPercent: tipo === 'percentual', peso: null };
     }
 
     const rows = [];
@@ -448,12 +591,9 @@ function buildDatasetsFromCSV(csvText){
 
     datasets.push({
       id: 'ds_' + Math.random().toString(36).slice(2,9),
-      fileName: arquivo,
-      week, periodSource: 'csv',
-      label, short, sortKey: week,
-      explicitWeek: week !== null,
-      relativeWeek: null,
-      userEdited: false,
+      fileName: arquivo, week, periodSource: 'csv',
+      label, short, sortKey: week, explicitWeek: week !== null,
+      relativeWeek: null, userEdited: false,
       metrics, rows, totalRow,
     });
   }
@@ -509,7 +649,6 @@ const MODULE_CFG = {
     },
     pairKey(){ return null; }
   },
-
   conviva: {
     title: 'Conviva', icon: '🏫', label: 'Conviva (ocorrências)',
     formatValue(metric, value){
@@ -554,7 +693,6 @@ const MODULE_CFG = {
       return null;
     }
   },
-
   atpl: {
     title: 'Planejamento de Aula', icon: '📅', label: 'Planejamento de Aula',
     formatValue(metric, value){
@@ -662,7 +800,10 @@ function buildModulePanel(m){
     </section>
 
     <section class="card hidden" id="kpi-${m.key}">
-      <h2>📊 Médias do período — <span class="muted" id="kpiEntityLabel-${m.key}"></span></h2>
+      <div class="card-head-row">
+        <h2>📊 Médias do período — <span class="muted" id="kpiEntityLabel-${m.key}"></span></h2>
+        <button class="btn btn-edit" data-edit-modal="${m.key}">⚙️ Editar índices</button>
+      </div>
       <div class="kpis" id="kpis-${m.key}"></div>
     </section>
 
@@ -973,9 +1114,7 @@ function renderPeriods(m){
     <div class="period-item" data-id="${d.id}">
       <span class="period-idx">${i+1}</span>
       <input type="text" value="${esc(d.label)}" data-role="label" spellcheck="false">
-      <span class="period-file" title="${esc(d.fileName)}">
-        📄 ${esc(d.fileName)}
-      </span>
+      <span class="period-file" title="${esc(d.fileName)}">📄 ${esc(d.fileName)}</span>
       <button class="icon-btn" data-act="up" title="Subir">▲</button>
       <button class="icon-btn" data-act="down" title="Descer">▼</button>
       <button class="icon-btn" data-act="del" title="Remover">✕</button>
@@ -1056,8 +1195,7 @@ function renderControls(m){
   document.getElementById(`metricPicker-${key}`).innerHTML = m.metrics.map(mt => `
     <label>
       <input type="checkbox" data-metric="${esc(mt.key)}" ${m.selectedMetrics.has(mt.key) ? 'checked' : ''}>
-      <span>${esc(mt.label)}</span>
-      ${mt.peso != null ? `<span class="peso">(${fmt(mt.peso)})</span>` : ''}
+      <span>${isHighlighted(key, mt.key) ? '⭐ ' : ''}${esc(mt.label)}</span>
     </label>`).join('');
 
   document.getElementById(`onlyCommon-${key}`).checked = m.onlyCommon;
@@ -1132,7 +1270,7 @@ for (const key of Object.keys(MODULES)){
 }
 
 /* =========================================================
-   PAINEL 1 — MÉDIAS DO PERÍODO
+   PAINEL 1 — MÉDIAS DO PERÍODO (com destaque)
    ========================================================= */
 function renderKPIs(m){
   const ent = m.focusEntity;
@@ -1148,14 +1286,22 @@ function renderKPIs(m){
     return;
   }
 
-  box.innerHTML = metrics.map(mt => {
+  // Ordena: destacados primeiro, depois os demais
+  const sorted = [...metrics].sort((a, b) => {
+    const ha = isHighlighted(m.key, a.key) ? 0 : 1;
+    const hb = isHighlighted(m.key, b.key) ? 0 : 1;
+    return ha - hb;
+  });
+
+  box.innerHTML = sorted.map(mt => {
     const values = m.datasets.map(d => getValue(m, d, ent, mt.key));
     const valid  = values.filter(v => typeof v === 'number' && isFinite(v));
     const media  = valid.length ? valid.reduce((a,b) => a+b, 0) / valid.length : null;
     const semColor = m.cfg.cellClass(mt, media);
     const nSemanas = valid.length;
+    const hl = isHighlighted(m.key, mt.key);
 
-    return `<div class="kpi ${semColor}">
+    return `<div class="kpi ${semColor}${hl ? ' highlight' : ''}">
       <div class="kpi-label" title="${esc(mt.label)}">${esc(mt.label)}</div>
       <div class="kpi-value">${m.cfg.formatValue(mt, media)}</div>
       <div class="kpi-sub">média de ${nSemanas} semana${nSemanas === 1 ? '' : 's'}</div>
@@ -1164,7 +1310,7 @@ function renderKPIs(m){
 }
 
 /* =========================================================
-   PAINEL 2 — AVANÇO (1ª → última semana)
+   PAINEL 2 — AVANÇO (com destaque)
    ========================================================= */
 function renderAvanco(m){
   const ent = m.focusEntity;
@@ -1180,15 +1326,21 @@ function renderAvanco(m){
     return;
   }
 
-  box.innerHTML = metrics.map(mt => {
+  const sorted = [...metrics].sort((a, b) => {
+    const ha = isHighlighted(m.key, a.key) ? 0 : 1;
+    const hb = isHighlighted(m.key, b.key) ? 0 : 1;
+    return ha - hb;
+  });
+
+  box.innerHTML = sorted.map(mt => {
     const values = m.datasets.map(d => getValue(m, d, ent, mt.key));
     const dlt = deltaOf(values);
     const current = dlt ? dlt.last : (values.find(v => typeof v === 'number') ?? null);
     const semColor = m.cfg.cellClass(mt, current);
+    const hl = isHighlighted(m.key, mt.key);
 
-    // Sem variação possível (menos de 2 semanas válidas)
     if (!dlt){
-      return `<div class="kpi ${semColor}">
+      return `<div class="kpi ${semColor}${hl ? ' highlight' : ''}">
         <div class="kpi-label" title="${esc(mt.label)}">${esc(mt.label)}</div>
         <div class="kpi-value">${m.cfg.formatValue(mt, current)}</div>
         <div class="kpi-delta flat">▬ sem variação</div>
@@ -1203,7 +1355,7 @@ function renderAvanco(m){
     const firstLabel = m.datasets[dlt.iFirst].label;
     const lastLabel  = m.datasets[dlt.iLast].label;
 
-    return `<div class="kpi ${semColor}">
+    return `<div class="kpi ${semColor}${hl ? ' highlight' : ''}">
       <div class="kpi-label" title="${esc(mt.label)}">${esc(mt.label)}</div>
       <div class="kpi-value">${m.cfg.formatValue(mt, dlt.last)}</div>
       <div class="kpi-delta ${cls}">${arrow} ${deltaStr}${pctStr}</div>
@@ -1218,6 +1370,70 @@ function renderAvanco(m){
 /* =========================================================
    GRÁFICOS
    ========================================================= */
+function buildChart(card, m, metric, entity, isHighlightedChart){
+  const color = isHighlightedChart ? GOLD_COLOR : PALETTE[0];
+  const shortLabels = m.datasets.map(d => d.short || d.label);
+  const fullLabels  = m.datasets.map(d => d.label);
+  const nWeeks = shortLabels.length;
+  const tickFont = nWeeks > 20 ? 9 : (nWeeks > 12 ? 10 : 11);
+  const rotate   = nWeeks > 14 ? 45 : 0;
+  const labelSize = nWeeks > 20 ? 9 : 10;
+
+  return new Chart(card.querySelector('canvas'), {
+    type: 'line',
+    data: {
+      labels: shortLabels,
+      datasets: [{
+        label: entityLabelOf(m, entity),
+        data: m.datasets.map(d => getValue(m, d, entity, metric.key)),
+        borderColor: color, backgroundColor: color,
+        pointBackgroundColor: color, pointBorderColor: '#fff', pointBorderWidth: 1.5,
+        borderWidth: isHighlightedChart ? 3.5 : 2.5,
+        tension: 0.3, spanGaps: true,
+        pointRadius: nWeeks > 20 ? 3 : 5,
+        pointHoverRadius: 7,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 400 },
+      layout: { padding: { top: 34, right: 14, left: 6, bottom: 4 } },
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: items => items.length ? fullLabels[items[0].dataIndex] : '',
+            label: c => `${c.dataset.label}: ${m.cfg.formatValue(metric, c.parsed.y)}`
+          }
+        },
+        datalabels: {
+          display: ctx => {
+            if (!m.showDataLabels) return false;
+            const v = ctx.dataset.data[ctx.dataIndex];
+            return v != null && isFinite(v);
+          },
+          align: 'top', anchor: 'end', offset: 6, clamp: true, clip: false,
+          color: '#fff',
+          backgroundColor: ctx => ctx.dataset.borderColor,
+          borderColor: '#fff', borderWidth: 1.5, borderRadius: 6,
+          padding: { top: 2, bottom: 2, left: 5, right: 5 },
+          font: { size: labelSize, weight: '700' },
+          formatter: v => m.cfg.formatValue(metric, v)
+        }
+      },
+      scales: {
+        x: { grid: { display: false },
+             ticks: { autoSkip: false, maxRotation: rotate, minRotation: rotate,
+                      font: { size: tickFont, weight: '600' }, color: '#334155', padding: 4,
+                      callback: function(val, index){ return shortLabels[index] ?? val; } } },
+        y: { grace: '16%', grid: { color: '#eef2f7' },
+             ticks: { font: { size: 10 }, callback: v => m.cfg.formatValue(metric, v) } }
+      }
+    }
+  });
+}
+
 function renderCharts(m){
   m.charts.forEach(c => { try { c.destroy(); } catch(e){} });
   m.charts = [];
@@ -1225,103 +1441,124 @@ function renderCharts(m){
   grid.innerHTML = '';
   const metrics = m.metrics.filter(mt => m.selectedMetrics.has(mt.key));
   const entities = m.selectionMode === 'single' ? [m.focusEntity] : [...m.selectedEntities];
-  const fullLabels  = m.datasets.map(d => d.label);
-  const shortLabels = m.datasets.map(d => d.short || d.label);
+
   if (!metrics.length){ grid.innerHTML = '<p class="muted small">Selecione ao menos uma métrica.</p>'; return; }
   if (!entities.length){ grid.innerHTML = '<p class="muted small">Nenhuma entidade selecionada.</p>'; return; }
 
-  const nWeeks = shortLabels.length;
-  const tickFont = nWeeks > 20 ? 9 : (nWeeks > 12 ? 10 : 11);
-  const rotate   = nWeeks > 14 ? 45 : 0;
-  const labelSize = nWeeks > 20 ? 9 : 10;
+  // Ordena: destacados primeiro
+  const sortedMetrics = [...metrics].sort((a, b) => {
+    const ha = isHighlighted(m.key, a.key) ? 0 : 1;
+    const hb = isHighlighted(m.key, b.key) ? 0 : 1;
+    return ha - hb;
+  });
 
-  metrics.forEach((metric, mi) => {
+  sortedMetrics.forEach((metric, mi) => {
     const card = document.createElement('div');
     card.className = 'chart-card';
+    const hl = isHighlighted(m.key, metric.key);
+    if (hl) card.classList.add('highlight-chart');
+
     card.innerHTML = `
       <div class="chart-head">
-        <h3 title="${esc(metric.label)}">${esc(metric.label)}</h3>
+        <h3 title="${esc(metric.label)}">${hl ? '⭐ ' : ''}${esc(metric.label)}</h3>
         <button class="copy-btn" type="button" data-html2canvas-ignore="true">📋 Copiar</button>
       </div>
       <div class="chart-wrap"><canvas></canvas></div>`;
     grid.appendChild(card);
 
-    let normalIdx = 0;
-    const datasets = entities.map(ent => {
-      const isConsol = ent === '__CONSOLIDADO__';
-      let color;
-      if (isConsol) color = CONSOLIDADO_COLOR;
-      else { color = PALETTE[(normalIdx + mi) % PALETTE.length]; normalIdx++; }
-      return {
-        label: entityLabelOf(m, ent),
-        data: m.datasets.map(d => getValue(m, d, ent, metric.key)),
-        borderColor: color, backgroundColor: color,
-        pointBackgroundColor: color, pointBorderColor: '#fff', pointBorderWidth: 1.5,
-        borderWidth: isConsol ? 3.5 : 2.5,
-        borderDash: isConsol ? [7,4] : undefined,
-        tension: 0.3, spanGaps: true,
-        pointRadius: isConsol ? (nWeeks > 20 ? 4 : 5) : (nWeeks > 20 ? 3 : (nWeeks > 12 ? 4 : 5)),
-        pointHoverRadius: 7
-      };
-    });
+    const multiEntity = entities.length > 1;
+    if (multiEntity){
+      // Multi-entidades: usa paleta normal, destaca só com borda mais forte se for highlight
+      const shortLabels = m.datasets.map(d => d.short || d.label);
+      const fullLabels = m.datasets.map(d => d.label);
+      const nWeeks = shortLabels.length;
 
-    const chart = new Chart(card.querySelector('canvas'), {
-      type: 'line',
-      data: { labels: shortLabels, datasets },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        animation: { duration: 400 },
-        layout: { padding: { top: 34, right: 14, left: 6, bottom: 4 } },
-        interaction: { mode:'index', intersect:false },
-        plugins: {
-          legend: { display: entities.length > 1, position: 'bottom',
-            labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle:'circle',
-                      font: { size: 10 }, padding: 10 } },
-          tooltip: {
-            callbacks: {
-              title: items => items.length ? fullLabels[items[0].dataIndex] : '',
-              label: c => `${c.dataset.label}: ${m.cfg.formatValue(metric, c.parsed.y)}`
+      let normalIdx = 0;
+      const datasets = entities.map(ent => {
+        const isConsol = ent === '__CONSOLIDADO__';
+        let color;
+        if (isConsol) color = CONSOLIDADO_COLOR;
+        else if (hl && normalIdx === 0) color = GOLD_COLOR;
+        else { color = PALETTE[(normalIdx + mi) % PALETTE.length]; }
+        normalIdx++;
+        return {
+          label: entityLabelOf(m, ent),
+          data: m.datasets.map(d => getValue(m, d, ent, metric.key)),
+          borderColor: color, backgroundColor: color,
+          pointBackgroundColor: color, pointBorderColor: '#fff', pointBorderWidth: 1.5,
+          borderWidth: isConsol ? 3.5 : 2.5,
+          borderDash: isConsol ? [7,4] : undefined,
+          tension: 0.3, spanGaps: true,
+          pointRadius: nWeeks > 20 ? 3 : (nWeeks > 12 ? 4 : 5),
+          pointHoverRadius: 7
+        };
+      });
+
+      const chart = new Chart(card.querySelector('canvas'), {
+        type: 'line',
+        data: { labels: shortLabels, datasets },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          animation: { duration: 400 },
+          layout: { padding: { top: 34, right: 14, left: 6, bottom: 4 } },
+          interaction: { mode:'index', intersect:false },
+          plugins: {
+            legend: { display: true, position: 'bottom',
+              labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle:'circle',
+                        font: { size: 10 }, padding: 10 } },
+            tooltip: {
+              callbacks: {
+                title: items => items.length ? fullLabels[items[0].dataIndex] : '',
+                label: c => `${c.dataset.label}: ${m.cfg.formatValue(metric, c.parsed.y)}`
+              }
+            },
+            datalabels: {
+              display: ctx => {
+                if (!m.showDataLabels) return false;
+                const v = ctx.dataset.data[ctx.dataIndex];
+                return v != null && isFinite(v);
+              },
+              align: 'top', anchor: 'end', offset: 6, clamp: true, clip: false,
+              color: '#fff',
+              backgroundColor: ctx => ctx.dataset.borderColor,
+              borderColor: '#fff', borderWidth: 1.5, borderRadius: 6,
+              padding: { top: 2, bottom: 2, left: 5, right: 5 },
+              font: { size: nWeeks > 20 ? 9 : 10, weight: '700' },
+              formatter: v => m.cfg.formatValue(metric, v)
             }
           },
-          datalabels: {
-            display: ctx => {
-              if (!m.showDataLabels) return false;
-              const v = ctx.dataset.data[ctx.dataIndex];
-              return v != null && isFinite(v);
-            },
-            align: 'top', anchor: 'end', offset: 6, clamp: true, clip: false,
-            color: '#fff',
-            backgroundColor: ctx => ctx.dataset.borderColor,
-            borderColor: '#fff', borderWidth: 1.5, borderRadius: 6,
-            padding: { top: 2, bottom: 2, left: 5, right: 5 },
-            font: { size: labelSize, weight: '700' },
-            formatter: v => m.cfg.formatValue(metric, v)
+          scales: {
+            x: { grid: { display: false },
+                 ticks: { autoSkip: false, maxRotation: nWeeks > 14 ? 45 : 0,
+                          font: { size: nWeeks > 20 ? 9 : 11, weight: '600' },
+                          color: '#334155', padding: 4,
+                          callback: function(val, index){ return shortLabels[index] ?? val; } } },
+            y: { grace: '16%', grid: { color: '#eef2f7' },
+                 ticks: { font: { size: 10 }, callback: v => m.cfg.formatValue(metric, v) } }
           }
-        },
-        scales: {
-          x: { grid: { display: false },
-               ticks: { autoSkip: false, maxRotation: rotate, minRotation: rotate,
-                        font: { size: tickFont, weight: '600' }, color: '#334155', padding: 4,
-                        callback: function(val, index){ return shortLabels[index] ?? val; } } },
-          y: { grace: '16%', grid: { color: '#eef2f7' },
-               ticks: { font: { size: 10 }, callback: v => m.cfg.formatValue(metric, v) } }
         }
-      }
-    });
-    const btn = card.querySelector('.copy-btn');
-    btn.addEventListener('click', () => copyChartAsImage(card, chart, btn));
-    m.charts.push(chart);
+      });
+      const btn = card.querySelector('.copy-btn');
+      btn.addEventListener('click', () => copyChartAsImage(card, chart, btn));
+      m.charts.push(chart);
+    } else {
+      // Uma entidade: usa buildChart que já lida com highlight
+      const chart = buildChart(card, m, metric, entities[0], hl);
+      const btn = card.querySelector('.copy-btn');
+      btn.addEventListener('click', () => copyChartAsImage(card, chart, btn));
+      m.charts.push(chart);
+    }
   });
 }
 
 /* =========================================================
-   TABELAS — Tabela 1 com "Média das semanas"
+   TABELAS
    ========================================================= */
 function renderTables(m){
   const ent = m.focusEntity;
   const labels = m.datasets.map(d => d.label);
 
-  /* ============ Tabela 1 ============ */
+  /* Tabela 1 */
   const metrics = m.metrics.filter(mt => m.selectedMetrics.has(mt.key));
   const t1 = document.getElementById(`tableIndexes-${m.key}`);
 
@@ -1336,6 +1573,7 @@ function renderTables(m){
   metrics.forEach(mt => {
     const values = m.datasets.map(d => getValue(m, d, ent, mt.key));
     const dlt = deltaOf(values);
+    const hl = isHighlighted(m.key, mt.key);
 
     let deltaCell = '<td class="delta-flat">—</td>';
     let pctCell   = '<td class="delta-flat">—</td>';
@@ -1357,7 +1595,7 @@ function renderTables(m){
     const mediaCls  = m.cfg.cellClass(mt, mediaSem);
     const mediaCell = `<td class="consol-col ${mediaCls}">${m.cfg.formatValue(mt, mediaSem)}</td>`;
 
-    body += `<tr>
+    body += `<tr class="${hl ? 'highlight-row' : ''}">
       <td>${esc(mt.label)}</td>
       ${cells}
       ${mediaCell}
@@ -1367,10 +1605,10 @@ function renderTables(m){
 
   t1.innerHTML = head + `<tbody>${body}</tbody>`;
 
-  /* ============ Tabela 2 ============ */
+  /* Tabela 2 */
   const sel = document.getElementById(`tableMetric-${m.key}`);
   sel.innerHTML = m.metrics.map(mt =>
-    `<option value="${esc(mt.key)}" ${mt.key === m.tableMetric ? 'selected' : ''}>${esc(mt.label)}</option>`).join('');
+    `<option value="${esc(mt.key)}" ${mt.key === m.tableMetric ? 'selected' : ''}>${isHighlighted(m.key, mt.key) ? '⭐ ' : ''}${esc(mt.label)}</option>`).join('');
 
   const mk = m.tableMetric;
   const metric = m.metrics.find(mt => mt.key === mk) || { key: mk, label: mk, isPercent: false };
@@ -1493,8 +1731,136 @@ document.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
 });
 
 /* =========================================================
-   RESUMO DA ESCOLA
+   MODAL — EDITAR ÍNDICES
    ========================================================= */
+const modal = document.getElementById('editModal');
+const modalBody = document.getElementById('modalBody');
+// Estado temporário enquanto o modal está aberto
+let modalTemp = null;
+
+function openEditModal(){
+  // Snapshot do estado atual
+  modalTemp = {
+    highlights: JSON.parse(JSON.stringify(PREFS.highlights || {})),
+    resumoMetrics: PREFS.resumoMetrics
+      ? JSON.parse(JSON.stringify(PREFS.resumoMetrics))
+      : null,
+  };
+  buildModalBody();
+  modal.classList.add('open');
+}
+
+function closeEditModal(){
+  modal.classList.remove('open');
+  modalTemp = null;
+}
+
+function buildModalBody(){
+  const modulesOrder = ['superbi','conviva','atpl'];
+  let html = '';
+
+  for (const key of modulesOrder){
+    const m = MODULES[key];
+    const allMetrics = m.metrics;
+
+    html += `<div class="modal-module">
+      <h4>${m.cfg.icon} ${esc(m.cfg.title)} <span class="muted small" style="font-weight:400">— ${allMetrics.length} índice${allMetrics.length === 1 ? '' : 's'}</span></h4>`;
+
+    if (!allMetrics.length){
+      html += `<p class="muted small">Nenhuma métrica carregada.</p>`;
+    } else {
+      html += `<div class="modal-metrics">`;
+      for (const mt of allMetrics){
+        const hlOn = (modalTemp.highlights[key] || []).includes(mt.key);
+        const anOn = (modalTemp.resumoMetrics === null)
+          ? true
+          : (modalTemp.resumoMetrics[key] || []).includes(mt.key);
+
+        html += `<div class="modal-metric-row" data-key="${key}" data-metric="${esc(mt.key)}">
+          <span class="name" title="${esc(mt.label)}">${esc(mt.label)}</span>
+          <label class="analisar-label">
+            <input type="checkbox" class="analisar-cb" ${anOn ? 'checked' : ''}>
+            Analisar
+          </label>
+          <label class="destacar-label">
+            <input type="checkbox" class="destacar-cb" ${hlOn ? 'checked' : ''}>
+            ⭐ Destacar
+          </label>
+        </div>`;
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+  }
+
+  modalBody.innerHTML = html;
+}
+
+// Delegação de eventos no modal
+modalBody.addEventListener('change', e => {
+  const row = e.target.closest('.modal-metric-row'); if (!row) return;
+  const key = row.dataset.key;
+  const metric = row.dataset.metric;
+
+  if (e.target.classList.contains('destacar-cb')){
+    if (!modalTemp.highlights[key]) modalTemp.highlights[key] = [];
+    const arr = modalTemp.highlights[key];
+    if (e.target.checked){
+      if (!arr.includes(metric)) arr.push(metric);
+    } else {
+      modalTemp.highlights[key] = arr.filter(x => x !== metric);
+    }
+  }
+
+  if (e.target.classList.contains('analisar-cb')){
+    // Garante que o mapa existe
+    if (modalTemp.resumoMetrics === null){
+      modalTemp.resumoMetrics = {};
+      for (const k of ['superbi','conviva','atpl']){
+        modalTemp.resumoMetrics[k] = MODULES[k].metrics.map(x => x.key);
+      }
+    }
+    if (!modalTemp.resumoMetrics[key]) modalTemp.resumoMetrics[key] = [];
+    const arr = modalTemp.resumoMetrics[key];
+    if (e.target.checked){
+      if (!arr.includes(metric)) arr.push(metric);
+    } else {
+      modalTemp.resumoMetrics[key] = arr.filter(x => x !== metric);
+    }
+  }
+});
+
+document.getElementById('modalCancel').addEventListener('click', closeEditModal);
+document.getElementById('modalSave').addEventListener('click', () => {
+  PREFS.highlights = modalTemp.highlights;
+  PREFS.resumoMetrics = modalTemp.resumoMetrics;
+  savePrefs();
+  closeEditModal();
+
+  // Re-renderiza tudo
+  for (const m of Object.values(MODULES)) renderModule(m);
+  if (document.querySelector('#tabsNav button.active')?.dataset.tab === 'resumo') renderResumo();
+});
+
+// Abrir modal a partir de botões
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-edit-modal]');
+  if (btn){ openEditModal(); }
+});
+
+// Fechar ao clicar fora ou ESC
+modal.addEventListener('click', e => {
+  if (e.target === modal) closeEditModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && modal.classList.contains('open')) closeEditModal();
+});
+
+/* =========================================================
+   RESUMO DA ESCOLA — agora com gráficos
+   ========================================================= */
+let resumoCharts = [];
+
 function renderResumo(){
   const panel = document.getElementById('panel-resumo');
   const anyData = Object.values(MODULES).some(m => m.datasets.length > 0);
@@ -1507,9 +1873,11 @@ function renderResumo(){
       </div>`;
     return;
   }
+
   const allSchools = new Set();
   for (const m of Object.values(MODULES)) m.entities.forEach(n => allSchools.add(n));
   const current = panel.dataset.school || '__MEDIA__';
+
   let html = `
     <div class="resumo-head">
       <span class="label">Escola em foco</span>
@@ -1519,18 +1887,29 @@ function renderResumo(){
         ${[...allSchools].sort().map(n =>
           `<option value="${esc(n)}" ${current===n?'selected':''}>${esc(n)}</option>`).join('')}
       </select>
-      <span class="muted small">Consolidado de todas as abas em tabelas.</span>
-    </div>`;
+      <span class="muted small" style="flex:1">Consolidado de todas as abas em gráficos e tabelas.</span>
+      <button class="btn btn-edit" data-edit-modal="resumo">⚙️ Editar índices</button>
+    </div>
+
+    <div class="card" id="resumoChartsCard">
+      <h2>📊 Evolução dos índices selecionados</h2>
+      <div id="resumoCharts"></div>
+    </div>
+  `;
+
   for (const key of ['superbi','conviva','atpl']){
     const m = MODULES[key];
     if (!m.datasets.length) continue;
     html += buildResumoTable(m, current);
   }
+
   panel.innerHTML = html;
+
   document.getElementById('resumoSchoolSelect').addEventListener('change', e => {
     panel.dataset.school = e.target.value;
     renderResumo();
   });
+
   panel.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
     btn.addEventListener('click', () => {
       const table = document.getElementById(btn.dataset.copy); if (!table) return;
@@ -1538,8 +1917,87 @@ function renderResumo(){
       copyTableAsImage(block, btn);
     });
   });
+
+  renderResumoCharts();
 }
 
+function renderResumoCharts(){
+  // Destrói gráficos anteriores
+  resumoCharts.forEach(c => { try { c.destroy(); } catch(e){} });
+  resumoCharts = [];
+
+  const panel = document.getElementById('panel-resumo');
+  const container = document.getElementById('resumoCharts');
+  if (!container) return;
+
+  const entity = panel.dataset.school || '__MEDIA__';
+
+  let anyRendered = false;
+  let html = '';
+
+  for (const key of ['superbi','conviva','atpl']){
+    const m = MODULES[key];
+    if (!m.datasets.length) continue;
+
+    const resumoKeys = getResumoMetricsFor(key);
+    const metrics = m.metrics.filter(mt => resumoKeys.includes(mt.key));
+    if (!metrics.length) continue;
+
+    anyRendered = true;
+
+    // Ordena: destacados primeiro
+    const sorted = [...metrics].sort((a, b) => {
+      const ha = isHighlighted(key, a.key) ? 0 : 1;
+      const hb = isHighlighted(key, b.key) ? 0 : 1;
+      return ha - hb;
+    });
+
+    html += `<div class="resumo-subtitle">${m.cfg.icon} ${esc(m.cfg.title)}</div>`;
+    html += `<div class="charts-grid">`;
+    sorted.forEach((metric, mi) => {
+      const hl = isHighlighted(key, metric.key);
+      html += `<div class="chart-card${hl ? ' highlight-chart' : ''}" data-chart-key="${key}" data-chart-metric="${esc(metric.key)}">
+        <div class="chart-head">
+          <h3 title="${esc(metric.label)}">${hl ? '⭐ ' : ''}${esc(metric.label)}</h3>
+          <button class="copy-btn" type="button" data-html2canvas-ignore="true">📋 Copiar</button>
+        </div>
+        <div class="chart-wrap"><canvas></canvas></div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (!anyRendered){
+    container.innerHTML = `
+      <div class="resumo-empty" style="padding:30px 20px">
+        <div style="font-size:32px;margin-bottom:6px">⚙️</div>
+        <div style="font-weight:600;margin-bottom:4px">Nenhum índice selecionado</div>
+        <div>Clique em <strong>⚙️ Editar índices</strong> para escolher o que analisar.</div>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = html;
+
+  // Cria cada gráfico individualmente
+  container.querySelectorAll('.chart-card').forEach(card => {
+    const key = card.dataset.chartKey;
+    const metricKey = card.dataset.chartMetric;
+    const m = MODULES[key];
+    const metric = m.metrics.find(mt => mt.key === metricKey);
+    if (!metric) return;
+    const hl = isHighlighted(key, metric.key);
+
+    const chart = buildChart(card, m, metric, entity, hl);
+    const btn = card.querySelector('.copy-btn');
+    if (btn) btn.addEventListener('click', () => copyChartAsImage(card, chart, btn));
+    resumoCharts.push(chart);
+  });
+}
+
+/* =========================================================
+   TABELAS DO RESUMO (com "Média das semanas")
+   ========================================================= */
 function buildResumoTable(m, entity){
   const cfg = m.cfg;
   const labels = m.datasets.map(d => d.label);
@@ -1556,6 +2014,7 @@ function buildResumoTable(m, entity){
   metrics.forEach(mt => {
     const values = m.datasets.map(d => getValue(m, d, entity, mt.key));
     const dlt = deltaOf(values);
+    const hl = isHighlighted(m.key, mt.key);
 
     let deltaCell = '<td class="delta-flat">—</td>';
     let pctCell   = '<td class="delta-flat">—</td>';
@@ -1577,7 +2036,7 @@ function buildResumoTable(m, entity){
     const mediaCls  = cfg.cellClass(mt, mediaSem);
     const mediaCell = `<td class="consol-col ${mediaCls}">${cfg.formatValue(mt, mediaSem)}</td>`;
 
-    body += `<tr>
+    body += `<tr class="${hl ? 'highlight-row' : ''}">
       <td>${esc(mt.label)}</td>
       ${cells}
       ${mediaCell}
