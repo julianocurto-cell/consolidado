@@ -44,7 +44,6 @@
   .global-bar button.primary:hover{ background:#0f766e; }
   .global-bar .load-info{ font-size:12px; color:#94a3b8; }
 
-  /* ---------- CARD DE AJUDA (files.json) ---------- */
   .help-card{
     display:none;
     background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);
@@ -297,39 +296,32 @@
 
   <header class="hero">
     <h1>📊 Painel Consolidado — Super BI · Conviva · Planejamento de Aula</h1>
-    <p>Painel único com quatro abas. Ao abrir, busca <strong>automaticamente</strong> os arquivos
-       <code>.xlsx/.xls/.csv</code> do mesmo diretório do <code>index.html</code>, classifica pelo
-       cabeçalho e distribui para a aba correta. O <strong>Resumo da Escola</strong> consolida
-       tudo em tabelas.</p>
+    <p>Painel único com quatro abas. Os arquivos são carregados <strong>automaticamente</strong>
+       da pasta <code>excel/</code> da hospedagem, classificados pelo cabeçalho e distribuídos
+       para a aba correta. O <strong>Resumo da Escola</strong> consolida tudo em tabelas.</p>
   </header>
 
   <div class="global-bar">
-    <span class="title">📁 Arquivos</span>
+    <span class="title">📁 Arquivos (pasta <code>excel/</code>)</span>
     <button id="reloadBtn" class="primary">🔄 Recarregar</button>
-    <button id="loadFiles">📄 Selecionar arquivos…</button>
-    <button id="loadDir">📂 Selecionar pasta local</button>
-    <input type="file" id="multiFileInput" multiple accept=".xlsx,.xls,.csv" hidden>
-    <input type="file" id="dirInput" webkitdirectory directory multiple hidden>
     <span class="load-info" id="loadInfo">Inicializando…</span>
   </div>
 
-  <!-- Card de ajuda: só aparece se a automação falhar -->
+  <!-- Card de ajuda — apenas se a automação falhar completamente -->
   <div class="help-card" id="helpCard">
-    <h3>⚙️ Como habilitar o carregamento 100% automático</h3>
-    <p>Não foi possível listar os arquivos do servidor automaticamente. Gere um arquivo
-       <code>files.json</code> na sua máquina e suba para a mesma pasta do
-       <code>index.html</code>. Depois disso, o painel carregará tudo sozinho.</p>
+    <h3>⚙️ Como habilitar o carregamento automático</h3>
+    <p>Não consegui listar a pasta <code>excel/</code> diretamente. Crie um arquivo
+       <code>excel/files.json</code> na hospedagem com a lista dos arquivos. Depois disso,
+       o painel carregará tudo sozinho, sem nenhum clique.</p>
     <div class="actions">
-      <button id="genFilesJsonBtn">📂 Gerar files.json a partir de uma pasta</button>
       <button id="copySampleBtn" class="secondary">📋 Ver exemplo de files.json</button>
-      <input type="file" id="genDirInput" webkitdirectory directory multiple hidden>
     </div>
     <pre id="sampleJson" style="display:none">[
   "AVARE (12).xlsx",
   "AVARE (13).xlsx",
-  "atpl (1).xlsx",
-  "atpl (2).xlsx",
-  "superbi (1).xlsx"
+  "superbi (1).xlsx",
+  "superbi (2).xlsx",
+  "atpl (1).xlsx"
 ]</pre>
   </div>
 
@@ -362,6 +354,12 @@
 if (window.ChartDataLabels && window.Chart){
   Chart.register(ChartDataLabels);
 }
+
+/* =========================================================
+   PASTA DOS ARQUIVOS
+   ========================================================= */
+const EXCEL_DIR = 'excel/';
+const EXCEL_DIR_ALT = './excel/';
 
 /* =========================================================
    HELPERS
@@ -811,18 +809,9 @@ for (const key of Object.keys(MODULE_CFG)){
 function buildModulePanel(m){
   const cfg = m.cfg;
   return `
-    <section class="card">
-      <div class="drop" id="drop-${m.key}">
-        <input type="file" id="file-${m.key}" multiple accept=".xlsx,.xls,.csv" hidden>
-        <div class="drop-icon">📄</div>
-        <p><strong>Arraste planilhas ${esc(cfg.title)} aqui</strong> ou clique</p>
-        <p class="muted small">Também é possível carregar tudo automaticamente pela barra do topo.</p>
-      </div>
-    </section>
     <section class="card hidden" id="periods-${m.key}">
       <div class="periods-head">
         <h2>🗓️ Períodos <span class="badge" id="periodCount-${m.key}">0</span></h2>
-        <button class="btn danger" data-clear="${m.key}">Limpar</button>
       </div>
       <div class="period-list" id="periodList-${m.key}"></div>
     </section>
@@ -921,7 +910,7 @@ function showLoading(sub){ loadingSub.textContent = sub || 'Isso pode levar algu
 function hideLoading(){ loadingEl.classList.add('hidden'); }
 
 /* =========================================================
-   PROCESSAMENTO
+   CLASSIFICAÇÃO
    ========================================================= */
 function classifyWorkbook(wb){
   const sheetName = wb.SheetNames.includes('Export') ? 'Export' : wb.SheetNames[0];
@@ -955,111 +944,136 @@ async function loadFromArrayBuffer(buf, fileName){
 }
 
 /* =========================================================
-   AUTOLOAD — 3 ESTRATÉGIAS EM CASCATA
+   AUTO-LOAD — busca sempre a pasta excel/
    ========================================================= */
 
-/** 1. Manifesto JSON (files.json / manifest.json / arquivos.json / index.json) */
+/** Garante que o caminho final tenha o prefixo excel/ */
+function resolvePath(p){
+  // Se já é URL absoluta
+  if (/^https?:\/\//i.test(p)) return p;
+  // Remove prefixos "./" e "../"
+  p = p.replace(/^(\.\.?\/)+/, '');
+  // Remove barra inicial
+  p = p.replace(/^\/+/, '');
+  // Se já começa com "excel/", mantém
+  if (/^excel\//i.test(p)) return p;
+  // Caso contrário, prefixa
+  return EXCEL_DIR + p;
+}
+
+/** 1. Manifesto JSON dentro de excel/ */
 async function fetchManifest(){
-  const candidates = ['files.json', 'manifest.json', 'arquivos.json', 'index.json', 'dados.json'];
-  for (const name of candidates){
-    try {
-      const r = await fetch(name, {cache:'no-store'});
-      if (!r.ok) continue;
-      const text = await r.text();
-      // Ignora se veio HTML (servidor devolveu 404 custom)
-      if (/^\s*</.test(text)) continue;
-      const data = JSON.parse(text);
-      const list = Array.isArray(data) ? data : (data.files || data.arquivos || []);
-      const files = list.filter(f => typeof f === 'string' && /\.(xlsx|xls|csv)$/i.test(f));
-      if (files.length) return { files, from:'files.json' };
-    } catch(e){ /* tenta o próximo */ }
+  const names = ['files.json','manifest.json','arquivos.json','index.json','dados.json','lista.json'];
+  const bases = [EXCEL_DIR, EXCEL_DIR_ALT, './excel/', ''];
+  for (const name of names){
+    for (const base of bases){
+      try {
+        const r = await fetch(base + name, {cache:'no-store'});
+        if (!r.ok) continue;
+        const text = await r.text();
+        if (/^\s*</.test(text)) continue;
+        let data;
+        try { data = JSON.parse(text); } catch(e){ continue; }
+        const list = Array.isArray(data) ? data : (data.files || data.arquivos || data.lista || []);
+        const files = list
+          .filter(f => typeof f === 'string' && /\.(xlsx|xls|csv)$/i.test(f))
+          .map(f => resolvePath(f));
+        if (files.length) return { files, from: base + name };
+      } catch(e){ /* tenta próximo */ }
+    }
   }
   return null;
 }
 
 /** 2. Listagem de diretório (Apache/nginx/Python http.server) */
 async function fetchDirectoryListing(){
-  const tryPaths = ['./', './index/', location.pathname.replace(/[^/]*$/, '')];
+  const candidates = ['excel/', './excel/', EXCEL_DIR_ALT, '/excel/'];
   const re = /href=["']([^"'?#]+?\.(?:xlsx|xls|csv))["']/gi;
   const found = new Set();
 
-  for (const path of tryPaths){
+  for (const dir of candidates){
     try {
-      const r = await fetch(path, {cache:'no-store'});
+      const r = await fetch(dir, {cache:'no-store'});
       if (!r.ok) continue;
       const html = await r.text();
-      // Confirma que é listagem de diretório (tem links, não é HTML do index)
-      if (!/Index of|Parent Directory|Directory listing|<pre>/i.test(html) &&
-          !/<a href=/i.test(html)) continue;
+      if (!/<a\s+href=/i.test(html)) continue;
 
       let m;
+      re.lastIndex = 0;
       while ((m = re.exec(html))){
         let url = decodeURIComponent(m[1]);
-        // Ignora URLs absolutas externas
         if (/^https?:\/\//i.test(url)) continue;
-        // Remove prefixos "../" ou "./"
-        url = url.replace(/^(\.\.?\/)+/, '');
-        // Remove caminhos absolutos de raiz (mantém só o nome relativo)
+        // Ignora links de navegação (../ etc)
+        if (/^\.\.?\//.test(url)) continue;
         if (url.startsWith('/')) url = url.slice(1);
+        // Se o link veio da raiz /excel/, precisa reaproveitar o prefixo
+        if (!/^excel\//i.test(url) && !/^https?:\/\//i.test(url)){
+          if (/^\/?excel\/?/.test(dir) || dir.includes('excel/')){
+            url = 'excel/' + url.replace(/^excel\//i,'');
+          }
+        }
         found.add(url);
       }
-    } catch(e){ /* tenta o próximo */ }
+    } catch(e){ /* tenta próximo */ }
   }
   if (found.size) return { files: [...found], from:'listagem do servidor' };
   return null;
 }
 
-/** 3. Endpoints dinâmicos comuns (PHP) — alguns servidores geram listagens via PHP */
-async function fetchPhpEndpoint(){
-  const candidates = ['list.php', 'files.php', 'arquivos.php', 'ls.php', 'api.php'];
-  for (const name of candidates){
-    try {
-      const r = await fetch(name, {cache:'no-store'});
-      if (!r.ok) continue;
-      const text = await r.text();
-      if (/^\s*</.test(text) && !/\.(xlsx|xls|csv)/i.test(text)) continue;
-      let list;
-      try { list = JSON.parse(text); } catch(e){ list = text.split(/\r?\n/); }
-      const files = (Array.isArray(list) ? list : (list.files || []))
-        .filter(f => typeof f === 'string' && /\.(xlsx|xls|csv)$/i.test(f));
-      if (files.length) return { files, from:name };
-    } catch(e){}
+/** 3. Endpoints dinâmicos dentro de excel/ */
+async function fetchEndpoint(){
+  const endpoints = ['list.php','files.php','arquivos.php','ls.php','api.php','index.php'];
+  const bases = [EXCEL_DIR, EXCEL_DIR_ALT, './excel/'];
+  for (const ep of endpoints){
+    for (const base of bases){
+      try {
+        const r = await fetch(base + ep, {cache:'no-store'});
+        if (!r.ok) continue;
+        const text = await r.text();
+        if (/^\s*<!DOCTYPE html>/i.test(text) && !/\.(xlsx|xls|csv)/i.test(text)) continue;
+        let list;
+        try { list = JSON.parse(text); } catch(e){ list = text.split(/\r?\n/); }
+        const files = (Array.isArray(list) ? list : (list.files || list.arquivos || []))
+          .filter(f => typeof f === 'string' && /\.(xlsx|xls|csv)$/i.test(f))
+          .map(f => resolvePath(f));
+        if (files.length) return { files, from: base + ep };
+      } catch(e){ /* tenta próximo */ }
+    }
   }
   return null;
 }
 
-async function autoLoadFromServer(silent){
+async function autoLoadFromServer(){
   if (location.protocol === 'file:'){
-    setLoadInfo('⚠️ Aberto localmente (file://). Use "📂 Selecionar pasta local" para carregar.');
-    showHelpCard();
+    setLoadInfo('⚠️ Aberto localmente (file://). Hospede o painel para carregar automaticamente.');
     return;
   }
 
-  if (!silent) showLoading('Procurando arquivos…');
+  showLoading('Procurando arquivos na pasta excel/…');
   setLoadInfo('🔄 Procurando arquivos…');
   hideHelpCard();
 
   let result = await fetchManifest();
   if (!result) result = await fetchDirectoryListing();
-  if (!result) result = await fetchPhpEndpoint();
+  if (!result) result = await fetchEndpoint();
 
   if (!result){
     hideLoading();
-    setLoadInfo('⚠️ Automação indisponível neste servidor. Veja as instruções abaixo.');
+    setLoadInfo('⚠️ Não foi possível listar a pasta excel/ automaticamente. Veja as instruções.');
     showHelpCard();
     return;
   }
 
   const { files, from } = result;
-  const counters = { superbi:0, conviva:0, atpl:0, ignorados:0, duplicados:0 };
+  const counters = { superbi:0, conviva:0, atpl:0, ignorados:0, duplicados:0, falhas:0 };
 
   for (let i = 0; i < files.length; i++){
     const url = files[i];
-    const name = url.split('/').pop().split('?')[0];
+    const name = decodeURIComponent(url.split('/').pop().split('?')[0]);
     loadingSub.textContent = `Lendo ${i+1}/${files.length}: ${name}`;
     try {
       const res = await fetch(url, {cache:'no-store'});
-      if (!res.ok){ counters.ignorados++; continue; }
+      if (!res.ok){ counters.falhas++; continue; }
       const buf = await res.arrayBuffer();
       const parsed = await loadFromArrayBuffer(buf, name);
       if (!parsed){ counters.ignorados++; continue; }
@@ -1068,7 +1082,7 @@ async function autoLoadFromServer(silent){
       else counters.duplicados++;
     } catch(e){
       console.error('Erro lendo', url, e);
-      counters.ignorados++;
+      counters.falhas++;
     }
   }
 
@@ -1077,17 +1091,24 @@ async function autoLoadFromServer(silent){
   hideHelpCard();
 
   const parts = [];
-  if (counters.superbi)  parts.push(`Super BI: ${counters.superbi}`);
-  if (counters.conviva)  parts.push(`Conviva: ${counters.conviva}`);
-  if (counters.atpl)     parts.push(`ATPL: ${counters.atpl}`);
+  if (counters.superbi)   parts.push(`Super BI: ${counters.superbi}`);
+  if (counters.conviva)   parts.push(`Conviva: ${counters.conviva}`);
+  if (counters.atpl)      parts.push(`ATPL: ${counters.atpl}`);
   if (counters.ignorados) parts.push(`ignorados: ${counters.ignorados}`);
   if (counters.duplicados) parts.push(`duplicados: ${counters.duplicados}`);
+  if (counters.falhas)    parts.push(`falhas: ${counters.falhas}`);
 
-  setLoadInfo(`✅ ${files.length} arquivo(s) via ${from} — ${parts.join(' · ') || 'nada novo'}`);
+  if (!counters.superbi && !counters.conviva && !counters.atpl){
+    setLoadInfo(`⚠️ Nenhum arquivo válido encontrado em ${from}.`);
+    showHelpCard();
+    return;
+  }
+
+  setLoadInfo(`✅ ${files.length} arquivo(s) via ${from} — ${parts.join(' · ')}`);
 }
 
 /* =========================================================
-   CARD DE AJUDA (files.json)
+   HELP CARD
    ========================================================= */
 const helpCard = document.getElementById('helpCard');
 function showHelpCard(){ helpCard.classList.add('show'); }
@@ -1097,92 +1118,6 @@ document.getElementById('copySampleBtn').addEventListener('click', () => {
   const pre = document.getElementById('sampleJson');
   pre.style.display = pre.style.display === 'none' ? 'block' : 'none';
 });
-
-document.getElementById('genFilesJsonBtn').addEventListener('click', () => {
-  document.getElementById('genDirInput').click();
-});
-
-document.getElementById('genDirInput').addEventListener('change', async e => {
-  const files = Array.from(e.target.files)
-    .filter(f => /\.(xlsx|xls|csv)$/i.test(f.name))
-    .map(f => f.name);
-
-  if (!files.length){
-    alert('Nenhum arquivo .xlsx/.xls/.csv encontrado nessa pasta.');
-    return;
-  }
-
-  const json = JSON.stringify(files, null, 2);
-  const blob = new Blob([json], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'files.json';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-
-  alert(`✅ files.json gerado com ${files.length} arquivo(s).\n\n` +
-        `Suba esse arquivo para a mesma pasta do index.html. Depois, clique em ` +
-        `"🔄 Recarregar" e o painel carregará tudo automaticamente.`);
-});
-
-/* =========================================================
-   UPLOAD MANUAL
-   ========================================================= */
-document.getElementById('loadFiles').addEventListener('click', () => {
-  document.getElementById('multiFileInput').click();
-});
-document.getElementById('multiFileInput').addEventListener('change', async e => {
-  await handleMultipleFiles(e.target.files);
-  e.target.value = '';
-});
-document.getElementById('loadDir').addEventListener('click', async () => {
-  if (window.showDirectoryPicker){
-    try {
-      const dirHandle = await window.showDirectoryPicker();
-      const files = [];
-      for await (const entry of dirHandle.values()){
-        if (entry.kind === 'file' && /\.(xlsx|xls|csv)$/i.test(entry.name)){
-          files.push(await entry.getFile());
-        }
-      }
-      await handleMultipleFiles(files);
-    } catch (e){
-      if (e.name !== 'AbortError') console.error(e);
-    }
-  } else {
-    document.getElementById('dirInput').click();
-  }
-});
-document.getElementById('dirInput').addEventListener('change', async e => {
-  await handleMultipleFiles(e.target.files);
-  e.target.value = '';
-});
-
-async function handleMultipleFiles(fileList){
-  const files = Array.from(fileList).filter(f => /\.(xlsx|xls|csv)$/i.test(f.name));
-  if (!files.length) return;
-  showLoading('Lendo arquivos selecionados…');
-  const counters = { superbi:0, conviva:0, atpl:0, ignorados:0, duplicados:0 };
-  for (let i = 0; i < files.length; i++){
-    const f = files[i];
-    loadingSub.textContent = `Lendo ${i+1}/${files.length}: ${f.name}`;
-    try {
-      const buf = await f.arrayBuffer();
-      const parsed = await loadFromArrayBuffer(buf, f.name);
-      if (!parsed){ counters.ignorados++; continue; }
-      const added = await addToModule(parsed.target, parsed.ds);
-      if (added) counters[parsed.target]++;
-      else counters.duplicados++;
-    } catch(e){ console.error(e); counters.ignorados++; }
-  }
-  for (const key of Object.keys(MODULES)) finalizeModule(MODULES[key]);
-  hideLoading();
-  hideHelpCard();
-  setLoadInfo(`✅ Manual — Super BI: ${counters.superbi} · Conviva: ${counters.conviva} · ATPL: ${counters.atpl} · Ignorados: ${counters.ignorados} · Duplicados: ${counters.duplicados}`);
-}
 
 /* =========================================================
    BOTÃO RECARREGAR
@@ -1197,48 +1132,8 @@ document.getElementById('reloadBtn').addEventListener('click', () => {
     renderModule(m);
   }
   updateTabCounts();
-  autoLoadFromServer(false);
+  autoLoadFromServer();
 });
-
-/* =========================================================
-   DROPS INDIVIDUAIS POR MÓDULO
-   ========================================================= */
-for (const key of Object.keys(MODULES)){
-  const drop = document.getElementById(`drop-${key}`);
-  const fileInput = document.getElementById(`file-${key}`);
-  drop.addEventListener('click', () => fileInput.click());
-  fileInput.addEventListener('change', async e => {
-    await handleFilesForModule(key, e.target.files);
-    e.target.value = '';
-  });
-  ['dragenter','dragover'].forEach(ev =>
-    drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
-  ['dragleave','drop'].forEach(ev =>
-    drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
-  drop.addEventListener('drop', e => {
-    if (e.dataTransfer && e.dataTransfer.files.length) handleFilesForModule(key, e.dataTransfer.files);
-  });
-}
-
-async function handleFilesForModule(key, fileList){
-  const files = Array.from(fileList).filter(f => /\.(xlsx|xls|csv)$/i.test(f.name));
-  if (!files.length) return;
-  showLoading('Lendo arquivos…');
-  const cfg = MODULE_CFG[key];
-  const m = MODULES[key];
-  for (let i = 0; i < files.length; i++){
-    const f = files[i];
-    loadingSub.textContent = `Lendo ${i+1}/${files.length}: ${f.name}`;
-    try {
-      const buf = await f.arrayBuffer();
-      const wb = XLSX.read(new Uint8Array(buf), {type:'array'});
-      const ds = cfg.parseWorkbook(wb, f.name);
-      if (ds && !m.datasets.some(d => d.fileName === f.name)) m.datasets.push(ds);
-    } catch(e){ console.error(e); }
-  }
-  finalizeModule(m);
-  hideLoading();
-}
 
 /* =========================================================
    FINALIZAÇÃO / CONSOLIDAÇÃO
@@ -1398,7 +1293,8 @@ function deltaOf(values){
 function renderModule(m){
   const has = m.datasets.length > 0;
   for (const suffix of ['periods','controls','kpi','charts','tables']){
-    document.getElementById(`${suffix}-${m.key}`).classList.toggle('hidden', !has);
+    const el = document.getElementById(`${suffix}-${m.key}`);
+    if (el) el.classList.toggle('hidden', !has);
   }
   if (!has) return;
   renderPeriods(m); renderControls(m); renderKPIs(m); renderCharts(m); renderTables(m);
@@ -1557,15 +1453,6 @@ for (const key of Object.keys(MODULES)){
   document.querySelector(`[data-selnone="${key}"]`).addEventListener('click', () => {
     const m = MODULES[key]; m.selectedMetrics = new Set();
     renderControls(m); renderCharts(m);
-  });
-  document.querySelector(`[data-clear="${key}"]`).addEventListener('click', () => {
-    const m = MODULES[key];
-    m.datasets = []; m.metrics = []; m.entities = [];
-    m.selectedEntities = new Set(['__MEDIA__']);
-    m.selectedMetrics = new Set(); m.knownMetricKeys = new Set();
-    m.focusEntity = '__MEDIA__'; m.tableMetric = null;
-    m.manualOrder = false; m.selectionMode = 'multi';
-    renderModule(m); updateTabCounts();
   });
   document.getElementById(`onlyCommon-${key}`).addEventListener('change', e => {
     const m = MODULES[key]; m.onlyCommon = e.target.checked;
@@ -1884,7 +1771,7 @@ function renderResumo(){
       <div class="resumo-empty">
         <div style="font-size:42px;margin-bottom:8px">📁</div>
         <div style="font-size:15px;font-weight:600;margin-bottom:6px">Nenhum dado carregado</div>
-        <div>Aguarde o carregamento automático ou use os botões no topo.</div>
+        <div>Aguarde o carregamento automático.</div>
       </div>`;
     return;
   }
@@ -1978,7 +1865,7 @@ function buildResumoTable(m, entity){
    INICIALIZAÇÃO AUTOMÁTICA
    ========================================================= */
 window.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => autoLoadFromServer(false), 300);
+  setTimeout(() => autoLoadFromServer(), 300);
 });
 </script>
 </body>
