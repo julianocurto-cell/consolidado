@@ -315,7 +315,6 @@ const PALETTE = ['#2563eb','#dc2626','#16a34a','#f59e0b','#7c3aed','#0891b2',
                  '#9333ea','#475569','#e11d48','#0ea5e9'];
 const CONSOLIDADO_COLOR = '#0f172a';
 
-/* Caminhos candidatos para os CSVs (na ordem em que serão tentados) */
 const CSV_SOURCES = {
   superbi: ['excel/super_bi.csv', 'super_bi.csv', './excel/super_bi.csv'],
   conviva: ['excel/conviva.csv', 'conviva.csv', './excel/conviva.csv'],
@@ -341,7 +340,7 @@ function normalizeLabel(label){
 }
 
 /* =========================================================
-   PARSE CSV (linha a linha, com aspas)
+   PARSE CSV
    ========================================================= */
 function parseCSVLine(line){
   const out = [];
@@ -363,16 +362,11 @@ function parseCSVLine(line){
   return out;
 }
 
-/* =========================================================
-   CONVERSÃO DE CSV EM DATASETS POR MÓDULO
-   ========================================================= */
 function buildDatasetsFromCSV(csvText){
-  // Remove BOM e normaliza quebras
   const text = csvText.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
   const lines = text.split('\n');
   if (lines.length < 2) return [];
 
-  // Cabeçalho
   const header = parseCSVLine(lines[0]).map(h => h.trim());
   const idx = {
     arquivo:  header.indexOf('arquivo'),
@@ -388,7 +382,6 @@ function buildDatasetsFromCSV(csvText){
     return [];
   }
 
-  // Agrupa por arquivo
   const byFile = new Map();
   for (let i = 1; i < lines.length; i++){
     const line = lines[i];
@@ -409,9 +402,9 @@ function buildDatasetsFromCSV(csvText){
     if (!byFile.has(arquivo)){
       byFile.set(arquivo, {
         semana, periodo,
-        rows: new Map(),          // escola → { metrica: valor }
-        types: new Map(),         // metrica → 'numero' | 'percentual'
-        order: [],                // ordem de aparição das métricas
+        rows: new Map(),
+        types: new Map(),
+        order: [],
       });
     }
     const entry = byFile.get(arquivo);
@@ -423,14 +416,12 @@ function buildDatasetsFromCSV(csvText){
     }
   }
 
-  // Constrói os datasets
   const datasets = [];
   for (const [arquivo, entry] of byFile){
     const week = /^\d+$/.test(entry.semana) ? parseInt(entry.semana, 10) : null;
     const label = entry.periodo || arquivo;
     const short = week !== null ? `S${pad(week)}` : label;
 
-    // Métricas do dataset (ordem original do CSV)
     const metrics = {};
     for (const name of entry.order){
       const tipo = entry.types.get(name);
@@ -442,7 +433,6 @@ function buildDatasetsFromCSV(csvText){
       };
     }
 
-    // Linhas (escolas) + linha Total
     const rows = [];
     let totalRow = null;
     for (const [escola, vals] of entry.rows){
@@ -726,14 +716,13 @@ function showLoading(sub){ loadingSub.textContent = sub || 'Buscando os CSVs…'
 function hideLoading(){ loadingEl.classList.add('hidden'); }
 
 /* =========================================================
-   CARREGAMENTO AUTOMÁTICO DOS CSVs
+   CARREGAMENTO AUTOMÁTICO
    ========================================================= */
 async function fetchText(url){
   try {
     const r = await fetch(url, {cache:'no-store'});
     if (!r.ok) return null;
     const txt = await r.text();
-    // Detecta HTML retornado por servidor (404 custom)
     if (/^\s*<\s*(!DOCTYPE|html)/i.test(txt)) return null;
     return txt;
   } catch(e){ return null; }
@@ -757,7 +746,6 @@ async function loadAll(){
   showLoading('Buscando os três CSVs…');
   setLoadInfo('🔄 Carregando…');
 
-  // Limpa tudo antes
   for (const m of Object.values(MODULES)){
     m.datasets = []; m.metrics = []; m.entities = [];
     m.selectedEntities = new Set(['__MEDIA__']);
@@ -782,7 +770,7 @@ async function loadAll(){
       MODULES[key].datasets = res.datasets;
       finalizeModule(MODULES[key]);
       loadedKeys.add(key);
-      summary.push(`${MODULE_CFG[key].title}: ${res.datasets.length} período(s) (${res.from})`);
+      summary.push(`${MODULE_CFG[key].title}: ${res.datasets.length} período(s)`);
     } catch(e){
       console.error('Erro carregando', key, e);
       summary.push(`${MODULE_CFG[key].title}: ❌`);
@@ -797,34 +785,28 @@ async function loadAll(){
     setLoadInfo('✅ ' + summary.join(' · '));
   }
 
-  if (loadedKeys.has('superbi') || loadedKeys.has('conviva') || loadedKeys.has('atpl')){
+  if (loadedKeys.size > 0){
     if (document.querySelector('#tabsNav button.active')?.dataset.tab === 'resumo') renderResumo();
   }
 }
 
-/* =========================================================
-   BOTÃO RECARREGAR
-   ========================================================= */
 document.getElementById('reloadBtn').addEventListener('click', () => loadAll());
 
 /* =========================================================
    FINALIZAÇÃO / CONSOLIDAÇÃO
    ========================================================= */
 function finalizeModule(m){
-  // Ordena por semana
   if (!m.manualOrder && m.datasets.length > 1){
     const allHaveKey = m.datasets.every(d => typeof d.sortKey === 'number');
     if (allHaveKey) m.datasets.sort((a,b) => a.sortKey - b.sortKey);
   }
 
-  // Rótulos duplicados
   const counts = {};
   m.datasets.forEach(d => {
     counts[d.label] = (counts[d.label] || 0) + 1;
     if (counts[d.label] > 1) d.label = d.label + ' (' + counts[d.label] + ')';
   });
 
-  // União de métricas (mantém ordem de primeira aparição)
   const metricMap = new Map();
   m.datasets.forEach(d => {
     Object.values(d.metrics).forEach(mt => {
@@ -833,12 +815,10 @@ function finalizeModule(m){
   });
   m.metrics = [...metricMap.values()];
 
-  // Novas métricas entram selecionadas
   m.metrics.forEach(mt => { if (!m.knownMetricKeys.has(mt.key)) m.selectedMetrics.add(mt.key); });
   [...m.selectedMetrics].forEach(k => { if (!metricMap.has(k)) m.selectedMetrics.delete(k); });
   m.knownMetricKeys = new Set(m.metrics.map(mt => mt.key));
 
-  // União de escolas
   const seen = new Set(); const names = [];
   m.datasets.forEach(d => d.rows.forEach(r => {
     if (!seen.has(r.nome)){ seen.add(r.nome); names.push(r.nome); }
@@ -846,7 +826,6 @@ function finalizeModule(m){
   m.entities = names;
   m.hasTotal = m.datasets.some(d => d.totalRow);
 
-  // Escolas comuns a todos os períodos
   if (m.datasets.length){
     let set = new Set(m.datasets[0].rows.map(r => r.nome));
     m.datasets.slice(1).forEach(d => {
@@ -961,7 +940,6 @@ function renderModule(m){
     if (el) el.classList.toggle('hidden', !has);
   }
   if (!has){
-    // mostra aviso no painel
     const panel = document.getElementById(`panel-${m.key}`);
     if (panel && !panel.querySelector('.empty-panel')){
       const empty = document.createElement('div');
@@ -972,7 +950,6 @@ function renderModule(m){
     }
     return;
   }
-  // Remove aviso se existir
   const panel = document.getElementById(`panel-${m.key}`);
   panel?.querySelectorAll('.empty-panel').forEach(el => el.remove());
 
@@ -1276,26 +1253,28 @@ function renderCharts(m){
 }
 
 /* =========================================================
-   TABELAS
+   TABELAS — Tabela 1 agora mostra "Média das semanas"
    ========================================================= */
 function renderTables(m){
   const ent = m.focusEntity;
   const labels = m.datasets.map(d => d.label);
-  const lastDs = m.datasets[m.datasets.length - 1];
-  const lastLabel = lastDs ? lastDs.label : '';
 
+  /* ============ Tabela 1 ============ */
   const metrics = m.metrics.filter(mt => m.selectedMetrics.has(mt.key));
   const t1 = document.getElementById(`tableIndexes-${m.key}`);
+
   let head = `<thead><tr>
     <th>Métrica</th>
     ${labels.map(l => `<th>${esc(l)}</th>`).join('')}
-    <th class="consol-col" title="Consolidado da última semana (${esc(lastLabel)})">Σ Consolidado</th>
+    <th class="consol-col" title="Média simples do índice nas ${m.datasets.length} semana(s) carregada(s)">Média das semanas</th>
     <th>Var.</th><th>Var.%</th>
   </tr></thead>`;
+
   let body = '';
   metrics.forEach(mt => {
     const values = m.datasets.map(d => getValue(m, d, ent, mt.key));
     const dlt = deltaOf(values);
+
     let deltaCell = '<td class="delta-flat">—</td>';
     let pctCell   = '<td class="delta-flat">—</td>';
     if (dlt){
@@ -1303,50 +1282,63 @@ function renderTables(m){
       deltaCell = `<td class="${cls}">${m.cfg.formatDelta(mt, dlt.abs)}</td>`;
       pctCell   = `<td class="${cls}">${dlt.pct !== null ? fmtPct(dlt.pct) : '—'}</td>`;
     }
+
     const cells = values.map(v => {
       const cls = m.cfg.cellClass(mt, v);
       return `<td class="${cls}">${m.cfg.formatValue(mt, v)}</td>`;
     }).join('');
-    const consolValue = lastDs ? getValue(m, lastDs, '__CONSOLIDADO__', mt.key) : null;
-    const consolCls   = m.cfg.cellClass(mt, consolValue);
-    const consolCell  = `<td class="consol-col ${consolCls}">${m.cfg.formatValue(mt, consolValue)}</td>`;
+
+    // === Média das semanas (média simples do índice) ===
+    const validVals = values.filter(v => typeof v === 'number' && isFinite(v));
+    const mediaSem  = validVals.length
+      ? validVals.reduce((a, b) => a + b, 0) / validVals.length
+      : null;
+    const mediaCls  = m.cfg.cellClass(mt, mediaSem);
+    const mediaCell = `<td class="consol-col ${mediaCls}">${m.cfg.formatValue(mt, mediaSem)}</td>`;
+
     body += `<tr>
       <td>${esc(mt.label)}</td>
       ${cells}
-      ${consolCell}
+      ${mediaCell}
       ${deltaCell}${pctCell}
     </tr>`;
   });
+
   t1.innerHTML = head + `<tbody>${body}</tbody>`;
 
+  /* ============ Tabela 2 (não muda) ============ */
   const sel = document.getElementById(`tableMetric-${m.key}`);
   sel.innerHTML = m.metrics.map(mt =>
     `<option value="${esc(mt.key)}" ${mt.key === m.tableMetric ? 'selected' : ''}>${esc(mt.label)}</option>`).join('');
+
   const mk = m.tableMetric;
-  const metric = m.metrics.find(mt => mt.key === mk) || { key:mk, label:mk, isPercent:false };
+  const metric = m.metrics.find(mt => mt.key === mk) || { key: mk, label: mk, isPercent: false };
   const t2 = document.getElementById(`tableSchools-${m.key}`);
   const head2 = `<thead><tr><th>Entidade</th>${labels.map(l => `<th>${esc(l)}</th>`).join('')}
                  <th>Var.</th><th>Var.%</th></tr></thead>`;
+
   let rows = [];
   const mediaValues = m.datasets.map(d => getValue(m, d, '__MEDIA__', mk));
-  rows.push({ nome:'📊 ' + entityLabelOf(m,'__MEDIA__'), values:mediaValues,
-              delta: deltaOf(mediaValues), kind:'media' });
+  rows.push({ nome: '📊 ' + entityLabelOf(m, '__MEDIA__'), values: mediaValues,
+              delta: deltaOf(mediaValues), kind: 'media' });
   const consolValues = m.datasets.map(d => getValue(m, d, '__CONSOLIDADO__', mk));
-  rows.push({ nome:'Σ ' + entityLabelOf(m,'__CONSOLIDADO__'), values:consolValues,
-              delta: deltaOf(consolValues), kind:'consol' });
+  rows.push({ nome: 'Σ ' + entityLabelOf(m, '__CONSOLIDADO__'), values: consolValues,
+              delta: deltaOf(consolValues), kind: 'consol' });
   const schoolNames = m.onlyCommon ? m.entities.filter(n => m.commonSet.has(n)) : m.entities;
   schoolNames.forEach(nome => {
     const values = m.datasets.map(d => getValue(m, d, nome, mk));
-    rows.push({ nome, values, delta:deltaOf(values), kind:'school' });
+    rows.push({ nome, values, delta: deltaOf(values), kind: 'school' });
   });
+
   const topRows = rows.filter(r => r.kind === 'media' || r.kind === 'consol');
   const schoolRows = rows.filter(r => r.kind === 'school');
-  schoolRows.sort((a,b) => {
+  schoolRows.sort((a, b) => {
     const va = a.delta ? a.delta.abs : -Infinity;
     const vb = b.delta ? b.delta.abs : -Infinity;
     return vb - va;
   });
   rows = [...topRows, ...schoolRows];
+
   let body2 = rows.map(r => {
     const dlt = r.delta;
     let deltaCell = '<td class="delta-flat">—</td><td class="delta-flat">—</td>';
@@ -1370,6 +1362,7 @@ function renderTables(m){
       ${deltaCell}
     </tr>`;
   }).join('');
+
   if (!rows.length) body2 = `<tr><td colspan="${labels.length + 3}" class="muted">Sem dados.</td></tr>`;
   t2.innerHTML = head2 + `<tbody>${body2}</tbody>`;
 }
@@ -1486,22 +1479,26 @@ function renderResumo(){
   });
 }
 
+/* =========================================================
+   RESUMO — buildResumoTable também com "Média das semanas"
+   ========================================================= */
 function buildResumoTable(m, entity){
   const cfg = m.cfg;
   const labels = m.datasets.map(d => d.label);
-  const lastDs = m.datasets[m.datasets.length - 1];
-  const lastLabel = lastDs ? lastDs.label : '';
   const metrics = m.metrics;
+
   let head = `<thead><tr>
     <th>Métrica</th>
     ${labels.map(l => `<th>${esc(l)}</th>`).join('')}
-    <th class="consol-col" title="Consolidado da última semana (${esc(lastLabel)})">Σ Consolidado</th>
+    <th class="consol-col" title="Média simples do índice nas ${m.datasets.length} semana(s) carregada(s)">Média das semanas</th>
     <th>Var.</th><th>Var.%</th>
   </tr></thead>`;
+
   let body = '';
   metrics.forEach(mt => {
     const values = m.datasets.map(d => getValue(m, d, entity, mt.key));
     const dlt = deltaOf(values);
+
     let deltaCell = '<td class="delta-flat">—</td>';
     let pctCell   = '<td class="delta-flat">—</td>';
     if (dlt){
@@ -1509,20 +1506,27 @@ function buildResumoTable(m, entity){
       deltaCell = `<td class="${cls}">${cfg.formatDelta(mt, dlt.abs)}</td>`;
       pctCell   = `<td class="${cls}">${dlt.pct !== null ? fmtPct(dlt.pct) : '—'}</td>`;
     }
+
     const cells = values.map(v => {
       const cls = cfg.cellClass(mt, v);
       return `<td class="${cls}">${cfg.formatValue(mt, v)}</td>`;
     }).join('');
-    const consolValue = lastDs ? getValue(m, lastDs, '__CONSOLIDADO__', mt.key) : null;
-    const consolCls   = cfg.cellClass(mt, consolValue);
-    const consolCell  = `<td class="consol-col ${consolCls}">${cfg.formatValue(mt, consolValue)}</td>`;
+
+    const validVals = values.filter(v => typeof v === 'number' && isFinite(v));
+    const mediaSem  = validVals.length
+      ? validVals.reduce((a, b) => a + b, 0) / validVals.length
+      : null;
+    const mediaCls  = cfg.cellClass(mt, mediaSem);
+    const mediaCell = `<td class="consol-col ${mediaCls}">${cfg.formatValue(mt, mediaSem)}</td>`;
+
     body += `<tr>
       <td>${esc(mt.label)}</td>
       ${cells}
-      ${consolCell}
+      ${mediaCell}
       ${deltaCell}${pctCell}
     </tr>`;
   });
+
   const tableId = `resumo-table-${m.key}`;
   return `
     <div class="table-block" data-block="resumo-${m.key}" style="margin-bottom:18px">
